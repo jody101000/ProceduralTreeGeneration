@@ -1,6 +1,6 @@
 #pragma once
-#include "../external/glm/glm.hpp"
-#include "../external/glfw/include/GLFW/glfw3.h"
+#include <glm.hpp>
+#include <GLFW/glfw3.h>
 
 class Camera {
 public:

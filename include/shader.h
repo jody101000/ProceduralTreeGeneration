@@ -1,5 +1,5 @@
 #pragma once
-#include "../external/glm/glm.hpp"
+#include <glm.hpp>
 #include <string>
 
 class Shader {

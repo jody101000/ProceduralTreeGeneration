@@ -105,14 +105,14 @@
     <ClCompile>
       <WarningLevel>Level3</WarningLevel>
       <SDLCheck>true</SDLCheck>
-      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions);SHADER_DIR="resource/shaders/"</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)external;$(SolutionDir)include;C:\MyProjects\ProceduralTreeGeneration\external;C:\MyProjects\ProceduralTreeGeneration\include;$(ProjectDir)include;$(ProjectDir)external;C:\MyProjects\ProceduralTreeGeneration\external\glm;C:\MyProjects\ProceduralTreeGeneration\external\glad\include\glad;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)external;$(SolutionDir)include;$(ProjectDir)include;$(ProjectDir)external;$(ProjectDir)external/glad/include;$(ProjectDir)external/glm;$(ProjectDir)external/glfw/include;$(ProjectDir)external/glfw/lib-vc2022;$(ProjectDir)external/glad/src;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\MyProjects\ProceduralTreeGeneration\external\glfw\lib-vc2022;C:\MyProjects\ProceduralTreeGeneration\external\glfw\include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>$(ProjectDir)external\glfw\lib-vc2022;$(ProjectDir)external\glfw\include;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>$(CoreLibraryDependencies);%(AdditionalDependencies);glfw3.lib;opengl32.lib</AdditionalDependencies>
     </Link>
     <PostBuildEvent>

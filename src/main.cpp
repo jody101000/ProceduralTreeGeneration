@@ -1,16 +1,17 @@
-#include "../external/glad/include/glad/glad.h"
-#include "../external/glfw/include/GLFW/glfw3.h"
-#include "../external/glm/glm.hpp"
-#include "../external/glm/gtc/matrix_transform.hpp"
-#include "../external/glm/gtc/type_ptr.hpp"
-#include "../include/shader.h"
-#include "../include/cylinder.h"
-#include "../include/tree.h"
-#include "../include/camera.h"
-#include "../include/window.h"
+#include <glad/glad.h>
+#include <GLFW/glfw3.h>
+#include <glm/glm.hpp>
+#include <gtc/matrix_transform.hpp>
+#include <gtc/type_ptr.hpp>
+#include "shader.h"
+#include "cylinder.h"
+#include "tree.h"
+#include "camera.h"
+#include "window.h"
 #include <vector>
 #include <iostream> 
 #include <memory> 
+#define SHADER_PATH(name) SHADER_DIR name
 
 Camera* g_camera = nullptr;
 
@@ -27,7 +28,8 @@ int main() {
     glfwSetScrollCallback(window.getHandle(), scroll_callback);
 
     // Create shader
-    Shader shader("resource/shaders/vertex_shader.glsl", "resource/shaders/fragment_shader.glsl");
+    Shader shader(SHADER_PATH("vertex_shader.glsl"),
+                  SHADER_PATH("fragment_shader.glsl"));
 
     // Generate cylinder mesh
     std::vector<float> vertices;
