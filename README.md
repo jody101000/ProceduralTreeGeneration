@@ -12,6 +12,13 @@ This project demonstrates:
 - Basic lighting and shading
 - Modern C++ practices with modular design
 
+## Important Notes for Contributors
+
+### CMake Integration
+- If Visual Studio prompts you with "CMake Integration" dialog asking to "enable Visual Studio's CMake support with this workspace", choose **"Do not enable"**
+- This project uses standard Visual Studio C++ project structure, not CMake
+- Enabling CMake support may cause build configuration issues
+
 ## Dependencies
 
 The project uses the following libraries:
