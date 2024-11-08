@@ -7,7 +7,7 @@ Tree branch generation is still in a rough state.
 
 This project demonstrates:
 - 3D graphics rendering using OpenGL
-- Procedural tree generation using recursive algorithms (to be implemented)
+- Procedural tree generation using recursive algorithms (in `tree.cpp`)
 - Interactive camera system with multiple control modes
 - Basic lighting and shading
 - Modern C++ practices with modular design
