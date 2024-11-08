@@ -1,5 +1,5 @@
-#include "../include/tree.h"
-#include "../external/glm/gtc/matrix_transform.hpp"
+#include "tree.h"
+#include <gtc/matrix_transform.hpp>
 
 void Tree::createBranches(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
     float length, float radius, int depth) {

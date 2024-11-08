@@ -4,13 +4,14 @@
 #include "../external/glm/gtc/matrix_transform.hpp"
 #include "../external/glm/gtc/type_ptr.hpp"
 #include "../include/shader.h"
-#include "../include/cylinder.h"
-#include "../include/tree.h"
-#include "../include/camera.h"
-#include "../include/window.h"
+#include "cylinder.h"
+#include "tree.h"
+#include "camera.h"
+#include "window.h"
 #include <vector>
 #include <iostream> 
 #include <memory> 
+#define SHADER_DIR RESOURCE_DIR "shaders/"
 
 Camera* g_camera = nullptr;
 
@@ -27,7 +28,7 @@ int main() {
     glfwSetScrollCallback(window.getHandle(), scroll_callback);
 
     // Create shader
-    Shader shader("resource/shaders/vertex_shader.glsl", "resource/shaders/fragment_shader.glsl");
+    Shader shader(SHADER_DIR "vertex_shader.glsl", SHADER_DIR "fragment_shader.glsl");
 
     // Generate cylinder mesh
     std::vector<float> vertices;

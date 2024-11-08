@@ -1,7 +1,7 @@
-#include "../include/shader.h"
-#include "../external//glad/include/glad/glad.h"
-#include "../external/glm/glm.hpp"
-#include "../external/glm/gtc/type_ptr.inl"
+#include "shader.h"
+#include <glad/glad.h>
+#include <glm.hpp>
+#include <gtc/type_ptr.inl>
 #include <fstream>
 #include <sstream>
 #include <iostream>

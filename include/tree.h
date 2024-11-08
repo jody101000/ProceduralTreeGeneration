@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "../external/glm/glm.hpp"
+#include <glm.hpp>
 
 class Tree {
 public:
