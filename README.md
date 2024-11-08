@@ -3,7 +3,7 @@
 A 3D tree visualization project using OpenGL, prepared for a Procedrual Tree Generation Project. 
 Tree branch generation is still in a rough state. 
 
-## Project Overview
+## Overview
 
 This project demonstrates:
 - 3D graphics rendering using OpenGL
