@@ -137,18 +137,24 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="external\glad\src\glad.c" />
+    <ClCompile Include="src\attraction_points.cpp" />
     <ClCompile Include="src\camera.cpp" />
     <ClCompile Include="src\cylinder.cpp" />
     <ClCompile Include="src\main.cpp" />
+    <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\tree.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\attraction_points.h" />
     <ClInclude Include="include\camera.h" />
     <ClInclude Include="include\cylinder.h" />
+    <ClInclude Include="include\renderer.h" />
     <ClInclude Include="include\shader.h" />
+    <ClInclude Include="include\sphere.h" />
     <ClInclude Include="include\tree.h" />
+    <ClInclude Include="include\tree_nodes.h" />
     <ClInclude Include="include\window.h" />
   </ItemGroup>
   <ItemGroup>
