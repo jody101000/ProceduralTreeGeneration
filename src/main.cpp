@@ -8,6 +8,9 @@
 #include "tree.h"
 #include "camera.h"
 #include "window.h"
+#include "sphere.h"
+#include "attraction_points.h"
+#include "renderer.h"
 #include <vector>
 #include <iostream> 
 #include <memory> 
@@ -32,27 +35,29 @@ int main() {
                   SHADER_PATH("fragment_shader.glsl"));
 
     // Generate cylinder mesh
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
-    Cylinder::create(vertices, indices, 0.1f, 1.0f, 8);
+    std::vector<float> cylinderVertices;
+    std::vector<unsigned int> cylinderIndices;
+    Cylinder::create(cylinderVertices, cylinderIndices, 0.1f, 1.0f, 8);
 
-    // Create and bind buffers
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
+    // Create cylinder buffers
+    auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
 
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
+    // Generate sphere mesh for attraction points
+    std::vector<float> sphereVertices;
+    std::vector<unsigned int> sphereIndices;
+    Sphere::create(sphereVertices, sphereIndices, 0.05f, 12, 12);
 
-    // Set up vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    // Create sphere buffers
+    auto sphereBuffers = MeshRenderer::createBuffers(sphereVertices, sphereIndices);
+
+    // Create Atrtaction Points
+    Envelope envelope;
+    envelope.position = glm::vec3(0.0f, 0.0f, 0.0f);
+    envelope.dimension = glm::vec3(1.0f, 1.0f, 1.0f);
+    envelope.num_points[0] = 4;
+    envelope.num_points[1] = 4;
+    envelope.num_points[2] = 4;
+    AttractionPointManager attractionPoints(envelope);
 
     // Generate branch transforms
     std::vector<glm::mat4> branchTransforms;
@@ -67,6 +72,7 @@ int main() {
     glm::vec3 lightPos(2.0f, 5.0f, 2.0f);
     glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
     glm::vec3 treeColor(0.45f, 0.32f, 0.12f);
+    glm::vec3 pointColor(1.0f, 0.0f, 0.0f);
 
     // Create camera and set global pointer
     auto camera = std::make_unique<Camera>();
@@ -100,10 +106,27 @@ int main() {
         shader.setVec3("lightColor", lightColor);
         shader.setVec3("objectColor", treeColor);
 
-        // Draw tree
+        // Draw tree branches
+        glBindVertexArray(cylinderBuffers.VAO);
+        shader.setVec3("objectColor", treeColor);
         for (const auto& transform : branchTransforms) {
             shader.setMat4("model", transform);
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
+        }
+
+        // Draw attraction points
+        glBindVertexArray(sphereBuffers.VAO);
+        shader.setVec3("objectColor", pointColor);
+        for (const auto& point : attractionPoints.attraction_points) {
+            glm::mat4 model = glm::mat4(1.0f);
+            model = glm::translate(model, point.position);
+            shader.setMat4("model", model);
+            glDrawElements(GL_TRIANGLES, sphereBuffers.indexCount, GL_UNSIGNED_INT, 0);
+        }
+
+        // close the window when esc is clicked
+        if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window.getHandle(), true);
         }
 
         window.swapBuffers();
@@ -111,9 +134,8 @@ int main() {
     }
 
     // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    MeshRenderer::deleteBuffers(cylinderBuffers);
+    MeshRenderer::deleteBuffers(sphereBuffers);
 
     // Camera will be automatically cleaned up when unique_ptr goes out of scope
     g_camera = nullptr;
