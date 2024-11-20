@@ -8,6 +8,7 @@
 #include "tree.h"
 #include "camera.h"
 #include "window.h"
+#include "renderer.h"
 #include <vector>
 #include <iostream> 
 #include <memory> 
@@ -31,28 +32,13 @@ int main() {
     Shader shader(SHADER_PATH("vertex_shader.glsl"),
                   SHADER_PATH("fragment_shader.glsl"));
 
-    // Generate cylinder mesh
-    std::vector<float> vertices;
-    std::vector<unsigned int> indices;
-    Cylinder::create(vertices, indices, 0.1f, 1.0f, 8);
+    // Generate cylinder mesh, variable name changed to be more specific
+    std::vector<float> cylinderVertices;
+    std::vector<unsigned int> cylinderIndices;
+    Cylinder::create(cylinderVertices, cylinderIndices, 0.1f, 1.0f, 8);
 
-    // Create and bind buffers
-    unsigned int VBO, VAO, EBO;
-    glGenVertexArrays(1, &VAO);
-    glGenBuffers(1, &VBO);
-    glGenBuffers(1, &EBO);
-
-    glBindVertexArray(VAO);
-    glBindBuffer(GL_ARRAY_BUFFER, VBO);
-    glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(float), vertices.data(), GL_STATIC_DRAW);
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size() * sizeof(unsigned int), indices.data(), GL_STATIC_DRAW);
-
-    // Set up vertex attributes
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
-    glEnableVertexAttribArray(1);
+    // Create cylinder buffers
+    auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
 
     // Generate branch transforms
     std::vector<glm::mat4> branchTransforms;
@@ -101,9 +87,11 @@ int main() {
         shader.setVec3("objectColor", treeColor);
 
         // Draw tree
+        glBindVertexArray(cylinderBuffers.VAO);
+        shader.setVec3("objectColor", treeColor); // redundant here, but you will need to re-assign color for each buffer
         for (const auto& transform : branchTransforms) {
             shader.setMat4("model", transform);
-            glDrawElements(GL_TRIANGLES, indices.size(), GL_UNSIGNED_INT, 0);
+            glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
         }
 
         window.swapBuffers();
@@ -111,9 +99,7 @@ int main() {
     }
 
     // Cleanup
-    glDeleteVertexArrays(1, &VAO);
-    glDeleteBuffers(1, &VBO);
-    glDeleteBuffers(1, &EBO);
+    MeshRenderer::deleteBuffers(cylinderBuffers);
 
     // Camera will be automatically cleaned up when unique_ptr goes out of scope
     g_camera = nullptr;
