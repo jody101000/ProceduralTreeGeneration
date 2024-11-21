@@ -1,13 +1,18 @@
 #pragma once
 #include <glm/glm.hpp>
 #include <vector>
-#include "attraction_points.h"
+#include "common_types.h"
 
-struct TreeNode {
-	glm::vec3 position;
-	// std::vector<AttractionPoint> linked_points;
-};
 
 class TreeNodeManager {
+public:
+	/* constructor */
+	TreeNodeManager(int initial_num);
 
+	bool GrowNewNodes(float growth_distance);
+	void DebugPrintNodes();
+	std::vector<TreeNode> tree_nodes;
+private:
+	void InitializeTreeNodes(int initial_num);
+	glm::vec3 GrowthDirection(TreeNode& node);
 };

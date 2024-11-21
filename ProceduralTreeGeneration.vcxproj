@@ -144,11 +144,13 @@
     <ClCompile Include="src\renderer.cpp" />
     <ClCompile Include="src\shader.cpp" />
     <ClCompile Include="src\tree.cpp" />
+    <ClCompile Include="src\tree_nodes.cpp" />
     <ClCompile Include="src\window.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\attraction_points.h" />
     <ClInclude Include="include\camera.h" />
+    <ClInclude Include="include\common_types.h" />
     <ClInclude Include="include\cylinder.h" />
     <ClInclude Include="include\renderer.h" />
     <ClInclude Include="include\shader.h" />

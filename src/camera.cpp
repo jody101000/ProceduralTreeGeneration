@@ -55,6 +55,18 @@ void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
         moved = true;
     }
 
+    // Distance adjustment with W/S keys
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
+        //position.y += moveDist;
+        target += front * moveDist;
+        moved = true;
+    }
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
+        //position.y -= moveDist;
+        target -= front * moveDist;
+        moved = true;
+    }
+
     // Pan camera target
     if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
         //position.y -= moveDist;
