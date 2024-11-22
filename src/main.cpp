@@ -35,7 +35,7 @@ int main() {
     // Generate cylinder mesh, variable name changed to be more specific
     std::vector<float> cylinderVertices;
     std::vector<unsigned int> cylinderIndices;
-    Cylinder::create(cylinderVertices, cylinderIndices, 0.1f, 1.0f, 8);
+    Cylinder::create(cylinderVertices, cylinderIndices, 0.075f, 1.0f, 8);
 
     // Create cylinder buffers
     auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
@@ -47,7 +47,30 @@ int main() {
     // Replace the existing model matrix creation with:
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, treePosition);
-    Tree::createBranches(model, branchTransforms, 1.0f, 0.1f, 4);
+	//model = glm::scale(model, glm::vec3(1, 2, 1));
+    //Tree::createBranches(model, branchTransforms, 0.9f, 0.1f, 4);
+    std::string axiom = "Y";
+    /*std::unordered_map<char, std::string> rules = {
+        {'Y', "X[&Y][^Y]"},
+        {'X', "XX"},
+    };*/
+    //std::unordered_map<char, std::string> rules = {
+    //{'X', "F[+X][-X][&X][^X]/FX"},   // `X` rule to create branching in multiple directions
+    //{'Y', "F[&Y][^Y]/Y[X]"},         // `Y` rule to vary branch angles for a fuller look
+    //{'F', "FF"}                      // `F` produces two segments for longer growth
+    //};
+    std::unordered_map<char, std::string> rules = {
+    {'X', "F[+FX][-FX][&FX][^FX]"},   // `X` generates branches in upward and downward directions with smaller branches
+    {'F', "FF"},                     // `F` elongates the trunk for taller growth
+    {'Y', "F[^Y][&Y][+Y][-Y]/Y"}     // `Y` adds variability to simulate smaller upward branches
+    };
+    //std::unordered_map<char, std::string> rules = {
+    //{'X', "F[-FX][&X]FX"},            // Drooping branches grow downward
+    //{'F', "FF"},                      // Elongate trunk and branches
+    //{'Y', "F[+Y][-Y][&Y]"}            // Generate additional smaller downward offshoots
+    //};
+
+	Tree::createBranchesLSystem(model, branchTransforms, axiom, rules,0.75f, 1.0f, 3);
 
     // Light settings
     glm::vec3 lightPos(2.0f, 5.0f, 2.0f);
