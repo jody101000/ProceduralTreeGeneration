@@ -61,14 +61,22 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
     std::stack<glm::mat4> transformStack;
     glm::mat4 currentModel = model;
 
+    std::random_device rd;  // Seed generator
+    std::mt19937 gen(rd()); // Random number generator (Mersenne Twister)
+    std::uniform_real_distribution<float> distrib(0.0, length);
+
+    // Generate a random number
+
     // Interpret the expanded string
     for (char c : current) {
+        float random_number = distrib(gen);
+        // length = random_number;
         switch (c) {
         case 'F':
             // Draw forward: Add current transformation and move forward
             branchTransforms.push_back(currentModel);
             currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
-            currentModel = glm::scale(currentModel, glm::vec3(1.0f, length, 1.0f));
+            currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
             break;
 
         case 'X':
@@ -76,7 +84,7 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
             // Generate branches based on 'X' or 'Y'
             branchTransforms.push_back(currentModel);
             currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
-            currentModel = glm::scale(currentModel, glm::vec3(radius, length, radius));
+            currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
             break;
 
         case '+':

@@ -54,23 +54,23 @@ int main() {
         {'Y', "X[&Y][^Y]"},
         {'X', "XX"},
     };*/
-    //std::unordered_map<char, std::string> rules = {
+    // std::unordered_map<char, std::string> rules = {
     //{'X', "F[+X][-X][&X][^X]/FX"},   // `X` rule to create branching in multiple directions
     //{'Y', "F[&Y][^Y]/Y[X]"},         // `Y` rule to vary branch angles for a fuller look
-    //{'F', "FF"}                      // `F` produces two segments for longer growth
-    //};
+    //{'F', "F"}                      // `F` produces two segments for longer growth
+    // };
+    // std::unordered_map<char, std::string> rules = {
+    //{'X', "F[+FX][-FX][&FX][^FX]"},   // `X` generates branches in upward and downward directions with smaller branches
+    //{'F', "F"},                     // `F` elongates the trunk for taller growth
+    //{'Y', "F[^Y][&Y][+Y][-Y]/Y"}     // `Y` adds variability to simulate smaller upward branches
+    // };
     std::unordered_map<char, std::string> rules = {
-    {'X', "F[+FX][-FX][&FX][^FX]"},   // `X` generates branches in upward and downward directions with smaller branches
-    {'F', "FF"},                     // `F` elongates the trunk for taller growth
-    {'Y', "F[^Y][&Y][+Y][-Y]/Y"}     // `Y` adds variability to simulate smaller upward branches
+        {'X', "F[-FX][&X]FX"}, // Drooping branches grow downward
+        {'F', "F"},            // Elongate trunk and branches
+        {'Y', "F[+Y][-Y][&Y]"} // Generate additional smaller downward offshoots
     };
-    //std::unordered_map<char, std::string> rules = {
-    //{'X', "F[-FX][&X]FX"},            // Drooping branches grow downward
-    //{'F', "FF"},                      // Elongate trunk and branches
-    //{'Y', "F[+Y][-Y][&Y]"}            // Generate additional smaller downward offshoots
-    //};
 
-	Tree::createBranchesLSystem(model, branchTransforms, axiom, rules,0.75f, 1.0f, 3);
+    Tree::createBranchesLSystem(model, branchTransforms, axiom, rules,0.75f, 1.0f, 3);
 
     // Light settings
     glm::vec3 lightPos(2.0f, 5.0f, 2.0f);
