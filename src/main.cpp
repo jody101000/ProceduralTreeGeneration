@@ -16,6 +16,9 @@
 #include <vector>
 #include <iostream> 
 #include <memory> 
+#define W_WIDTH 800.0f
+#define W_HEIGHT 600.0f
+
 #define SHADER_PATH(name) SHADER_DIR name
 #define BRANCH_LENGTH 0.2f
 #define ROOT_BRANCH_COUNT (int)7
@@ -23,17 +26,12 @@
 
 Camera* g_camera = nullptr;
 
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-
 int main() {
     // Create and initialize window
-    Window window(800, 600, "3D Tree");
+    Window window(W_WIDTH, W_HEIGHT, "3D Tree");
     if (!window.init()) {
         return -1;
     }
-
-    // Set up callbacks
-    glfwSetScrollCallback(window.getHandle(), scroll_callback);
 
     // Create shader
     Shader shader(SHADER_PATH("vertex_shader.glsl"),
@@ -96,15 +94,23 @@ int main() {
     Tree::createBranchesRootNodes(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
 
     // Light settings
-    glm::vec3 lightPos(2.0f, 5.0f, 2.0f);
-    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+    std::vector<glm::vec3> lightPositions = {
+        glm::vec3(2.0f, 5.0f, 2.0f),
+        glm::vec3(-2.0f, 3.0f, -2.0f)
+    };
+    std::vector<glm::vec3> lightColors = {
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec3(1.0f, 0.8f, 0.8f)
+    };
+
     glm::vec3 treeColor(0.45f, 0.32f, 0.12f);
     glm::vec3 pointColor(1.0f, 0.0f, 0.0f);
     glm::vec3 nodeColor(0.0f, 1.0f, 0.0f);
 
     // Create camera and set global pointer
-    auto camera = std::make_unique<Camera>();
+    auto camera = std::make_unique<Camera>(W_WIDTH/W_HEIGHT);
     g_camera = camera.get();
+    glViewport(0, 0, W_WIDTH, W_HEIGHT);
 
     // For calculating delta time
     float lastFrame = 0.0f;
@@ -122,16 +128,19 @@ int main() {
 
         // Update camera
         camera->processKeyboard(window.getHandle(), deltaTime);
-        camera->updateRotation(deltaTime);
+        camera->update(deltaTime);
 
         // Get updated matrices
         glm::mat4 view = camera->getViewMatrix();
-        glm::mat4 projection = camera->getProjectionMatrix(window.getAspectRatio());
+        glm::mat4 projection = camera->getProjectionMatrix();
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
-        shader.setVec3("lightPos", lightPos);
-        shader.setVec3("lightColor", lightColor);
+        for (int i = 0; i < lightPositions.size(); i++) {
+            shader.setVec3("lights[" + std::to_string(i) + "].position", lightPositions[i]);
+            shader.setVec3("lights[" + std::to_string(i) + "].color", lightColors[i]);
+        }
+        shader.setInt("numLights", lightPositions.size());
         shader.setVec3("objectColor", treeColor);
 
         // Draw tree branches
@@ -181,10 +190,4 @@ int main() {
     g_camera = nullptr;
 
     return 0;
-}
-
-void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
-    if (g_camera) {
-        g_camera->processMouseScroll(static_cast<float>(yoffset));
-    }
 }
