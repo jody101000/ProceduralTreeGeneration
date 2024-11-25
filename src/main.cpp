@@ -12,6 +12,7 @@
 #include <vector>
 #include <iostream> 
 #include <memory> 
+#include "leaf.h"
 #define SHADER_PATH(name) SHADER_DIR name
 
 Camera* g_camera = nullptr;
@@ -42,35 +43,39 @@ int main() {
 
     // Generate branch transforms
     std::vector<glm::mat4> branchTransforms;
-    glm::vec3 treePosition(0.0f, -1.0f, 0.0f); // Example: moves tree to x=-2, z=1
-
-    // Replace the existing model matrix creation with:
+    glm::vec3 treePosition(0.0f, -1.0f, 0.0f);
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, treePosition);
-	//model = glm::scale(model, glm::vec3(1, 2, 1));
-    //Tree::createBranches(model, branchTransforms, 0.9f, 0.1f, 4);
-    std::string axiom = "Y";
-    /*std::unordered_map<char, std::string> rules = {
-        {'Y', "X[&Y][^Y]"},
-        {'X', "XX"},
-    };*/
-    // std::unordered_map<char, std::string> rules = {
-    //{'X', "F[+X][-X][&X][^X]/FX"},   // `X` rule to create branching in multiple directions
-    //{'Y', "F[&Y][^Y]/Y[X]"},         // `Y` rule to vary branch angles for a fuller look
-    //{'F', "F"}                      // `F` produces two segments for longer growth
-    // };
-    // std::unordered_map<char, std::string> rules = {
-    //{'X', "F[+FX][-FX][&FX][^FX]"},   // `X` generates branches in upward and downward directions with smaller branches
-    //{'F', "F"},                     // `F` elongates the trunk for taller growth
-    //{'Y', "F[^Y][&Y][+Y][-Y]/Y"}     // `Y` adds variability to simulate smaller upward branches
-    // };
+    std::string axiom = "X";
+
     std::unordered_map<char, std::string> rules = {
-        {'X', "F[-FX][&X]FX"}, // Drooping branches grow downward
-        {'F', "F"},            // Elongate trunk and branches
-        {'Y', "F[+Y][-Y][&Y]"} // Generate additional smaller downward offshoots
+        {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\^FXL][--^FXL]"},  
+        {'F', "F[/+FL][-FL]"},                         
+        {'Y', "F[\+&FYL][/-+F^YL][/&F^Y*L][\^FYL][F++++YL]"},       
+        {'L', "L[+L][-L][&L][^L]"}                  
     };
 
-    Tree::createBranchesLSystem(model, branchTransforms, axiom, rules,0.75f, 1.0f, 3);
+	/*std::unordered_map<char, std::string> rules = {
+		{'X', "FF[+XLYL++XL-F[+YLXL]][-XL++F-XL]L"},
+		{'F', "X\[FXL/[+XLF]]"},
+		{'Y', "\\[+F-XL-F][++YLXL]"}
+	};*/
+    
+
+   /* std::unordered_map<char, std::string> rules = {
+		{'X', "FF+[-F-XF-X][+XLXLL][-XLF[^XLL]][++F&XL]L"},
+		{'F', "XX"},
+	};*/
+    
+
+	std::vector<float> leafVertices;
+	std::vector<unsigned int> leafIndices;
+	leaf::createLeaf(leafVertices, leafIndices);
+	auto leafBuffers = MeshRenderer::createBuffers(leafVertices, leafIndices);
+	glm::mat4 leafModel = glm::mat4(1.0f);
+	std::vector<glm::mat4> leafTransforms;
+
+    Tree::createBranchesLSystem(model, branchTransforms,leafTransforms , axiom, rules, 0.75f, 1.0f, 4);
 
     // Light settings
     std::vector<glm::vec3> lightPositions = {
@@ -127,11 +132,19 @@ int main() {
             shader.setMat4("model", transform);
             glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
         }
+      
+        //Draw Leaves
+        glBindVertexArray(leafBuffers.VAO);
+        shader.setVec3("objectColor", glm::vec3(0.0f, 1.0f, 0.0f));
+        for (const auto& transform : leafTransforms) {
+          shader.setMat4("model", transform);
+          glDrawElements(GL_TRIANGLES, leafBuffers.indexCount, GL_UNSIGNED_INT, 0);
+        }
 
         if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window.getHandle(), true);
         }
-
+      
         window.swapBuffers();
         window.pollEvents();
     }
