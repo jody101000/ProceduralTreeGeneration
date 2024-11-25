@@ -73,13 +73,21 @@ int main() {
     Tree::createBranchesLSystem(model, branchTransforms, axiom, rules,0.75f, 1.0f, 3);
 
     // Light settings
-    glm::vec3 lightPos(2.0f, 5.0f, 2.0f);
-    glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+    std::vector<glm::vec3> lightPositions = {
+        glm::vec3(2.0f, 5.0f, 2.0f),
+        glm::vec3(-2.0f, 3.0f, -2.0f)
+    };
+    std::vector<glm::vec3> lightColors = {
+        glm::vec3(1.0f, 1.0f, 1.0f),
+        glm::vec3(1.0f, 1.0f, 1.0f)
+    };
     glm::vec3 treeColor(0.45f, 0.32f, 0.12f);
 
+    glm::vec3 cameraPos = treePosition + glm::vec3{0, 1, 0};
     // Create camera and set global pointer
-    auto camera = std::make_unique<Camera>();
+    auto camera = std::make_unique<Camera>(800.0f/600.0f, cameraPos);
     g_camera = camera.get();
+    glViewport(0, 0, 800.0f, 600.0f);
 
     // For calculating delta time
     float lastFrame = 0.0f;
@@ -97,16 +105,19 @@ int main() {
 
         // Update camera
         camera->processKeyboard(window.getHandle(), deltaTime);
-        camera->updateRotation(deltaTime);
+        camera->update(deltaTime);
 
         // Get updated matrices
         glm::mat4 view = camera->getViewMatrix();
-        glm::mat4 projection = camera->getProjectionMatrix(window.getAspectRatio());
+        glm::mat4 projection = camera->getProjectionMatrix();
 
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
-        shader.setVec3("lightPos", lightPos);
-        shader.setVec3("lightColor", lightColor);
+        for (int i = 0; i < lightPositions.size(); i++) {
+            shader.setVec3("lights[" + std::to_string(i) + "].position", lightPositions[i]);
+            shader.setVec3("lights[" + std::to_string(i) + "].color", lightColors[i]);
+        }
+        shader.setInt("numLights", lightPositions.size());
         shader.setVec3("objectColor", treeColor);
 
         // Draw tree
@@ -115,6 +126,10 @@ int main() {
         for (const auto& transform : branchTransforms) {
             shader.setMat4("model", transform);
             glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
+        }
+
+        if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window.getHandle(), true);
         }
 
         window.swapBuffers();
