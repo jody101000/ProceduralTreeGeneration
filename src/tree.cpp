@@ -32,11 +32,9 @@ void Tree::createBranches(glm::mat4& model, std::vector<glm::mat4>& branchTransf
 
 
 void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
-    const std::string& axiom, const std::unordered_map<char, std::string>& rules,
+    std::vector<glm::mat4>& leafTransforms, const std::string& axiom,
+    const std::unordered_map<char, std::string>& rules,
     float length, float radius, int depth) {
-
-    // Seed random generator for variability
-    //std::srand(static_cast<unsigned int>(std::time(0)));
 
     const float angleZ = 20.0f; // For '+' and '-'
     const float angleX = 60.0f; // For '&' and '^'
@@ -56,35 +54,43 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
         }
         current = next;
     }
-    
+
     // Stack to handle branching points
     std::stack<glm::mat4> transformStack;
     glm::mat4 currentModel = model;
-
-    std::random_device rd;  // Seed generator
-    std::mt19937 gen(rd()); // Random number generator (Mersenne Twister)
-    std::uniform_real_distribution<float> distrib(0.0, length);
-
-    // Generate a random number
-
     // Interpret the expanded string
+	int fCount = 0;
     for (char c : current) {
-        float random_number = distrib(gen);
-        // length = random_number;
+        std::random_device rd;  // Seed the random number generator
+        std::mt19937 gen(rd()); // Mersenne Twister engine
+        std::uniform_int_distribution<> dis(0,12); // Uniform distribution between 0 and 20
+        std::uniform_int_distribution<> disRotate(-120, 120); // Rotation between 0 and 120 degrees
+        std::uniform_real_distribution<> disScale(0.5f, length); // Scale between 0.5 and 1.5
+        std::uniform_real_distribution<> disTranslate(-0.4f, 0.4f);
+		std::uniform_int_distribution<> disBranch(0,1);
+        int num_leaves = dis(gen);
+		int gen_branch = disBranch(gen);
         switch (c) {
         case 'F':
+
             // Draw forward: Add current transformation and move forward
-            branchTransforms.push_back(currentModel);
-            currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
-            currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
+            //if (gen_branch != 0 || fCount < 25)
+            //{   
+                fCount++;
+                branchTransforms.push_back(currentModel);
+                currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
+                currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
+            //}
             break;
 
         case 'X':
         case 'Y':
+            if (gen_branch != 0) {
             // Generate branches based on 'X' or 'Y'
             branchTransforms.push_back(currentModel);
             currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
             currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
+            }
             break;
 
         case '+':
@@ -130,11 +136,35 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
             }
             break;
 
+        case 'L':  // 'L' indicates a leaf point
+
+            for (int i = 0; i < num_leaves; i++) {
+                float random_angle = disRotate(gen);
+                float scaleFactor = disScale(gen);
+
+                float randomTranslateX = disTranslate(gen);
+                float randomTranslateY = disTranslate(gen);
+                float randomTranslateZ = disTranslate(gen);
+                glm::mat4 leafModel = currentModel;
+
+                leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 0.0f, 1.0f)); // Rotate around Z
+                leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(1.0f, 0.0f, 0.0f)); // Rotate around X
+                leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around Y
+
+                // Apply scaling to vary leaf sizes
+                //leafModel = glm::scale(leafModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
+                // Apply random translation
+                //leafModel = glm::translate(leafModel, glm::vec3(randomTranslateX, randomTranslateY, randomTranslateZ));
+
+                leafTransforms.push_back(leafModel);
+            }
+            break;
         default:
             // Ignore any other symbols
             break;
         }
     }
 }
+
 
 
