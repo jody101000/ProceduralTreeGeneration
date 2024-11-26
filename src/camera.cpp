@@ -65,10 +65,10 @@ void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
 
     // Orbital rotation
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        orbit(-orbitAmount, 0.0f);
+        orbit(orbitAmount, 0.0f);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        orbit(orbitAmount, 0.0f);
+        orbit(-orbitAmount, 0.0f);
     }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         orbit(0.0f, orbitAmount);
@@ -88,16 +88,16 @@ void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
 
     // Translation
     if (glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS) {
-        translate(-up * moveAmount);
+        translate(up * moveAmount);
     }
     if (glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS) {
-        translate(up * moveAmount);
-    }
-    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         translate(-up * moveAmount);
     }
-    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
         translate(up * moveAmount);
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        translate(-up * moveAmount);
     }
 
     glm::vec3 right = glm::normalize(glm::cross(forward, up));

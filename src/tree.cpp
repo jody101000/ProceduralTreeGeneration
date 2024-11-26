@@ -1,4 +1,8 @@
 #include "tree.h"
+#include "tree_nodes.h"
+#include "common_types.h"
+#include "cylinder.h"
+#include <glm/glm.hpp>
 #include <gtc/matrix_transform.hpp>
 #include <stack>
 #include <unordered_map>
@@ -8,6 +12,8 @@
 #include <cstdlib>  // For randomization
 #include <ctime>    // For seeding randomness
 #include <random>
+#define GLM_ENABLE_EXPERIMENTAL
+#include <glm/gtx/quaternion.hpp>
 
 void Tree::createBranches(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
     float length, float radius, int depth) {
@@ -167,4 +173,59 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
 }
 
 
+void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
+    float length, float radius, int depth) {
+    if (parent.children.empty()) return;
 
+    for (size_t child_i : parent.children) {
+        TreeNode child_node = tree_nodes[child_i];
+        glm::mat4 child_branch = model;
+
+        // Calculate direction vector from parent to current node
+        glm::vec3 direction = child_node.position - parent.position;
+        direction = glm::normalize(direction);
+        
+        child_branch = glm::translate(child_branch, parent.position);
+
+        // Calculate rotation to align with direction vector
+        // Default up vector is (0,1,0)
+        if (direction != glm::vec3(0.0f, 1.0f, 0.0f)) {
+            glm::vec3 rotationAxis = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction);
+            float rotationAngle = acos(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), direction));
+            child_branch = glm::rotate(child_branch, rotationAngle, rotationAxis);
+        }
+        child_branch = glm::scale(child_branch, glm::vec3(parent.radius, 1.0f, parent.radius));
+
+        branchTransforms.push_back(child_branch);
+
+        spaceColonizationGrow(tree_nodes, tree_nodes[child_i], model, branchTransforms, length, radius, depth);
+    }
+}
+
+void Tree::createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
+    float length, float radius, int depth, int root_nodes) {
+    // branchTransforms.push_back(model);
+    for (size_t i = 1; i < root_nodes; i++) {
+        glm::mat4 main_branch = model;
+
+        // Calculate direction vector from parent to current node
+        glm::vec3 direction = tree_nodes[i].position - tree_nodes[i-1].position;
+        direction = glm::normalize(direction);
+
+        main_branch = glm::translate(main_branch, tree_nodes[i - 1].position);
+
+        // Calculate rotation to align with direction vector
+        // Default up vector is (0,1,0)
+        if (direction != glm::vec3(0.0f, 1.0f, 0.0f)) {
+            glm::vec3 rotationAxis = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction);
+            float rotationAngle = acos(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), direction));
+            main_branch = glm::rotate(main_branch, rotationAngle, rotationAxis);
+        }
+
+        branchTransforms.push_back(main_branch);
+    }
+
+    for (size_t i = 0; i < root_nodes; i++) {
+        spaceColonizationGrow(tree_nodes, tree_nodes[i], model, branchTransforms, length, radius, depth);
+    }
+}

@@ -6,14 +6,31 @@
 #include "shader.h"
 #include "cylinder.h"
 #include "tree.h"
+#include "leaf.h"
 #include "camera.h"
 #include "window.h"
+#include "sphere.h"
+#include "attraction_points.h"
 #include "renderer.h"
+#include "common_types.h"
+#include "tree_nodes.h"
 #include <vector>
 #include <iostream> 
 #include <memory> 
-#include "leaf.h"
+#define W_WIDTH 800.0f
+#define W_HEIGHT 600.0f
+
 #define SHADER_PATH(name) SHADER_DIR name
+#define BRANCH_LENGTH 0.2f
+#define ROOT_BRANCH_COUNT (int)7
+#define MAX_GROW (int)200
+
+enum class Mode {
+    LSystem,
+    SpaceColonization
+};
+
+Mode mode = Mode::LSystem;  // Default mode
 
 Camera* g_camera = nullptr;
 
@@ -21,7 +38,7 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 int main() {
     // Create and initialize window
-    Window window(800, 600, "3D Tree");
+    Window window(W_WIDTH, W_HEIGHT, "3D Tree");
     if (!window.init()) {
         return -1;
     }
@@ -33,17 +50,23 @@ int main() {
     Shader shader(SHADER_PATH("vertex_shader.glsl"),
                   SHADER_PATH("fragment_shader.glsl"));
 
-    // Generate cylinder mesh, variable name changed to be more specific
+    // Generate cylinder mesh
     std::vector<float> cylinderVertices;
     std::vector<unsigned int> cylinderIndices;
-    Cylinder::create(cylinderVertices, cylinderIndices, 0.075f, 1.0f, 8);
+    float branchLength = 1.0f;
+	if (mode == Mode::SpaceColonization) {
+		branchLength = BRANCH_LENGTH + 0.04f;
+	}
+    Cylinder::create(cylinderVertices, cylinderIndices, 0.05f, branchLength, 8); // cylinder length
 
     // Create cylinder buffers
     auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
 
     // Generate branch transforms
     std::vector<glm::mat4> branchTransforms;
-    glm::vec3 treePosition(0.0f, -1.0f, 0.0f);
+    glm::vec3 treePosition(0.0f, 0.0f, 0.0f); // Example: moves tree to x=-2, z=1
+
+    // Replace the existing model matrix creation with:
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, treePosition);
     std::string axiom = "X";
@@ -75,7 +98,35 @@ int main() {
 	glm::mat4 leafModel = glm::mat4(1.0f);
 	std::vector<glm::mat4> leafTransforms;
 
-    Tree::createBranchesLSystem(model, branchTransforms,leafTransforms , axiom, rules, 0.75f, 1.0f, 4);
+	if (mode == Mode::LSystem) {
+		Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, axiom, rules, 0.75f, 1.0f, 4);
+	}
+	else if (mode == Mode::SpaceColonization) {
+        // Create Atrtaction Points
+        Envelope envelope;
+        envelope.position = glm::vec3(0.1f, 1.0f, 0.2f);
+        envelope.interval = glm::vec3(0.3f, 0.3f, 0.3f);
+        AttractionPointManager attractionPoints(envelope);
+
+        // Generate tree nodes on the root branch
+        TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
+        // First growth
+        attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+
+        int itr = 0;
+        bool grew = true;
+        while (grew != false && itr < MAX_GROW) {
+            grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
+            attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+            itr++;
+            if (itr % 50 == 0) {
+                printf("%dth growth done. ", itr);
+            }
+        }
+
+        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
+	}
+
 
     // Light settings
     std::vector<glm::vec3> lightPositions = {
@@ -87,12 +138,14 @@ int main() {
         glm::vec3(1.0f, 1.0f, 1.0f)
     };
     glm::vec3 treeColor(0.45f, 0.32f, 0.12f);
+    glm::vec3 pointColor(1.0f, 0.0f, 0.0f);
+    glm::vec3 nodeColor(0.0f, 1.0f, 0.0f);
 
     glm::vec3 cameraPos = treePosition + glm::vec3{0, 1, 0};
     // Create camera and set global pointer
-    auto camera = std::make_unique<Camera>(800.0f/600.0f, cameraPos);
+    auto camera = std::make_unique<Camera>(W_WIDTH / W_HEIGHT, cameraPos);
     g_camera = camera.get();
-    glViewport(0, 0, 800.0f, 600.0f);
+    glViewport(0, 0, W_WIDTH, W_HEIGHT);
 
     // For calculating delta time
     float lastFrame = 0.0f;
@@ -125,22 +178,23 @@ int main() {
         shader.setInt("numLights", lightPositions.size());
         shader.setVec3("objectColor", treeColor);
 
-        // Draw tree
+        // Draw tree branches
         glBindVertexArray(cylinderBuffers.VAO);
-        shader.setVec3("objectColor", treeColor); // redundant here, but you will need to re-assign color for each buffer
+        shader.setVec3("objectColor", treeColor);
         for (const auto& transform : branchTransforms) {
             shader.setMat4("model", transform);
             glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
         }
-      
+
         //Draw Leaves
         glBindVertexArray(leafBuffers.VAO);
         shader.setVec3("objectColor", glm::vec3(0.0f, 1.0f, 0.0f));
         for (const auto& transform : leafTransforms) {
-          shader.setMat4("model", transform);
-          glDrawElements(GL_TRIANGLES, leafBuffers.indexCount, GL_UNSIGNED_INT, 0);
+            shader.setMat4("model", transform);
+            glDrawElements(GL_TRIANGLES, leafBuffers.indexCount, GL_UNSIGNED_INT, 0);
         }
 
+        // close the window when esc is clicked
         if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window.getHandle(), true);
         }
