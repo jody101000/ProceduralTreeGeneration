@@ -4,10 +4,11 @@
 
 class Camera {
 public:
-    Camera(float aspectRatio = 800.0f / 600.0f);
+    Camera(float aspectRatio = 800.0f / 600.0f, glm::vec3 focusPoint = { 0.0f, 1.2f, 0.0f });
 
     void update(float deltaTime);
     void processKeyboard(GLFWwindow* window, float deltaTime);
+    void processMouseScroll(float yoffset);
     void toggleAutoRotate();
 
     glm::mat4 getViewMatrix() const;
@@ -17,6 +18,7 @@ private:
     void updateCameraVectors();
     void orbit(float deltaYaw, float deltaPitch);
     void translate(const glm::vec3& offset);
+    void moveAlongViewDirection(float amount);
 
     // Camera attributes
     glm::vec3 position{ 0.0f, 1.2f, 4.0f };
@@ -28,15 +30,16 @@ private:
     float yaw{ -90.0f };
     float pitch{ 0.0f };
 
-    const glm::vec3 default_position{ 0.0f, 1.2f, 4.0f };
-    const glm::vec3 default_focusPoint{ 0.0f, 1.2f, 0.0f };
+    glm::vec3 default_position{ 0.0f, 1.2f, 4.0f };
+    glm::vec3 default_focusPoint{ 0.0f, 1.2f, 0.0f };
     const  glm::vec3 default_up{ 0.0f, 1.0f, 0.0f };
     const float default_yaw{ -90.0f };
     const float default_pitch{ 0.0f };
 
     // Camera options
-    float rotationSpeed{ 40.0f };
-    float moveSpeed{ 5.0f };
+    float rotationSpeed{ -30.0f };
+    float moveSpeed{ 3.0f };
+    float scrollSpeed{ 0.1f };
     float aspectRatio;
     float fov{ 45.0f };
     bool autoRotating{ true };

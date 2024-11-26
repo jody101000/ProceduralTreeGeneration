@@ -2,7 +2,12 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <algorithm>
 
-Camera::Camera(float aspectRatio) : aspectRatio(aspectRatio) {
+Camera::Camera(float aspectRatio, glm::vec3 focusPoint)
+    : aspectRatio(aspectRatio)
+    , focusPoint(focusPoint){
+    position = { focusPoint.x, focusPoint.y, focusPoint.z + radius};
+    default_position = position;
+    default_focusPoint = focusPoint;
     updateCameraVectors();
 }
 
@@ -10,6 +15,24 @@ void Camera::update(float deltaTime) {
     if (autoRotating) {
         orbit(rotationSpeed * deltaTime, 0.0f);
     }
+}
+
+void Camera::processMouseScroll(float yoffset) {
+    //autoRotating = false;  // Stop auto-rotation when scrolling
+    glm::vec3 focus = focusPoint;
+    moveAlongViewDirection(yoffset * scrollSpeed);
+    focusPoint = focus;
+    glm::vec3 pos = position;
+    focus.y = 0;
+    pos.y = 0;
+    radius = glm::length(focus - pos);
+}
+
+void Camera::moveAlongViewDirection(float amount) {
+    glm::vec3 forward = glm::normalize(focusPoint - position);
+    float distance = glm::length(focusPoint - position);
+    float scaledMove = amount * distance * 0.5f;
+    translate(forward * scaledMove);
 }
 
 void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
@@ -22,6 +45,8 @@ void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
         glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS ||
+        glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_PAGE_UP) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_PAGE_DOWN) == GLFW_PRESS ||
         glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS ||
@@ -40,10 +65,10 @@ void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
 
     // Orbital rotation
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
-        orbit(-orbitAmount, 0.0f);
+        orbit(orbitAmount, 0.0f);
     }
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
-        orbit(orbitAmount, 0.0f);
+        orbit(-orbitAmount, 0.0f);
     }
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
         orbit(0.0f, orbitAmount);
@@ -55,10 +80,10 @@ void Camera::processKeyboard(GLFWwindow* window, float deltaTime) {
     // Forward/backward movement
     glm::vec3 forward = glm::normalize(focusPoint - position);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS) {
-        translate(forward * moveAmount);
+        moveAlongViewDirection(moveAmount);
     }
     if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS) {
-        translate(-forward * moveAmount);
+        moveAlongViewDirection(-moveAmount);
     }
 
     // Translation

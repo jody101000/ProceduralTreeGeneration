@@ -6,6 +6,7 @@
 #include "shader.h"
 #include "cylinder.h"
 #include "tree.h"
+#include "leaf.h"
 #include "camera.h"
 #include "window.h"
 #include "sphere.h"
@@ -24,7 +25,16 @@
 #define ROOT_BRANCH_COUNT (int)7
 #define MAX_GROW (int)200
 
+enum class Mode {
+    LSystem,
+    SpaceColonization
+};
+
+Mode mode = Mode::LSystem;  // Default mode
+
 Camera* g_camera = nullptr;
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 
 int main() {
     // Create and initialize window
@@ -33,6 +43,9 @@ int main() {
         return -1;
     }
 
+    // Set up callbacks
+    glfwSetScrollCallback(window.getHandle(), scroll_callback);
+
     // Create shader
     Shader shader(SHADER_PATH("vertex_shader.glsl"),
                   SHADER_PATH("fragment_shader.glsl"));
@@ -40,7 +53,11 @@ int main() {
     // Generate cylinder mesh
     std::vector<float> cylinderVertices;
     std::vector<unsigned int> cylinderIndices;
-    Cylinder::create(cylinderVertices, cylinderIndices, 0.05f, BRANCH_LENGTH + 0.04f, 8); // cylinder length
+    float branchLength = 1.0f;
+	if (mode == Mode::SpaceColonization) {
+		branchLength = BRANCH_LENGTH + 0.04f;
+	}
+    Cylinder::create(cylinderVertices, cylinderIndices, 0.05f, branchLength, 8); // cylinder length
 
     // Create cylinder buffers
     auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
@@ -91,7 +108,42 @@ int main() {
     // Replace the existing model matrix creation with:
     glm::mat4 model = glm::mat4(1.0f);
     model = glm::translate(model, treePosition);
-    Tree::createBranchesRootNodes(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
+    std::string axiom = "X";
+
+    std::unordered_map<char, std::string> rules = {
+        {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\^FXL][--^FXL]"},  
+        {'F', "F[/+FL][-FL]"},                         
+        {'Y', "F[\+&FYL][/-+F^YL][/&F^Y*L][\^FYL][F++++YL]"},       
+        {'L', "L[+L][-L][&L][^L]"}                  
+    };
+
+	/*std::unordered_map<char, std::string> rules = {
+		{'X', "FF[+XLYL++XL-F[+YLXL]][-XL++F-XL]L"},
+		{'F', "X\[FXL/[+XLF]]"},
+		{'Y', "\\[+F-XL-F][++YLXL]"}
+	};*/
+    
+
+   /* std::unordered_map<char, std::string> rules = {
+		{'X', "FF+[-F-XF-X][+XLXLL][-XLF[^XLL]][++F&XL]L"},
+		{'F', "XX"},
+	};*/
+    
+
+	std::vector<float> leafVertices;
+	std::vector<unsigned int> leafIndices;
+	leaf::createLeaf(leafVertices, leafIndices);
+	auto leafBuffers = MeshRenderer::createBuffers(leafVertices, leafIndices);
+	glm::mat4 leafModel = glm::mat4(1.0f);
+	std::vector<glm::mat4> leafTransforms;
+
+	if (mode == Mode::LSystem) {
+		Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, axiom, rules, 0.75f, 1.0f, 4);
+	}
+	else if (mode == Mode::SpaceColonization) {
+        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
+	}
+
 
     // Light settings
     std::vector<glm::vec3> lightPositions = {
@@ -100,15 +152,15 @@ int main() {
     };
     std::vector<glm::vec3> lightColors = {
         glm::vec3(1.0f, 1.0f, 1.0f),
-        glm::vec3(1.0f, 0.8f, 0.8f)
+        glm::vec3(1.0f, 1.0f, 1.0f)
     };
-
     glm::vec3 treeColor(0.45f, 0.32f, 0.12f);
     glm::vec3 pointColor(1.0f, 0.0f, 0.0f);
     glm::vec3 nodeColor(0.0f, 1.0f, 0.0f);
 
+    glm::vec3 cameraPos = treePosition + glm::vec3{0, 1, 0};
     // Create camera and set global pointer
-    auto camera = std::make_unique<Camera>(W_WIDTH/W_HEIGHT);
+    auto camera = std::make_unique<Camera>(W_WIDTH / W_HEIGHT, cameraPos);
     g_camera = camera.get();
     glViewport(0, 0, W_WIDTH, W_HEIGHT);
 
@@ -172,11 +224,19 @@ int main() {
         //    glDrawElements(GL_TRIANGLES, nodeBuffers.indexCount, GL_UNSIGNED_INT, 0);
         //}
 
+        //Draw Leaves
+        glBindVertexArray(leafBuffers.VAO);
+        shader.setVec3("objectColor", glm::vec3(0.0f, 1.0f, 0.0f));
+        for (const auto& transform : leafTransforms) {
+            shader.setMat4("model", transform);
+            glDrawElements(GL_TRIANGLES, leafBuffers.indexCount, GL_UNSIGNED_INT, 0);
+        }
+
         // close the window when esc is clicked
         if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window.getHandle(), true);
         }
-
+      
         window.swapBuffers();
         window.pollEvents();
     }
@@ -190,4 +250,10 @@ int main() {
     g_camera = nullptr;
 
     return 0;
+}
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset) {
+    if (g_camera) {
+        g_camera->processMouseScroll(static_cast<float>(yoffset));
+    }
 }
