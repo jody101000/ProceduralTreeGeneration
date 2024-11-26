@@ -30,7 +30,7 @@ enum class Mode {
     SpaceColonization
 };
 
-Mode mode = Mode::SpaceColonization;  // Default mode
+Mode mode = Mode::LSystem;  // Default mode
 
 Camera* g_camera = nullptr;
 
@@ -186,27 +186,6 @@ int main() {
             glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
         }
 
-        /* --------------- DEBUGGING CODES ------------ */
-        //// Draw attraction points
-        //glBindVertexArray(sphereBuffers.VAO);
-        //shader.setVec3("objectColor", pointColor);
-        //for (const auto& point : attractionPoints.attraction_points) {
-        //    glm::mat4 model = glm::mat4(1.0f);
-        //    model = glm::translate(model, point.position);
-        //    shader.setMat4("model", model);
-        //    glDrawElements(GL_TRIANGLES, sphereBuffers.indexCount, GL_UNSIGNED_INT, 0);
-        //}
-
-        //// Draw tree nodes
-        //glBindVertexArray(nodeBuffers.VAO);
-        //shader.setVec3("objectColor", nodeColor);
-        //for (const auto& node : treeNodeManager.tree_nodes) {
-        //    glm::mat4 model = glm::mat4(1.0f);
-        //    model = glm::translate(model, node.position);
-        //    shader.setMat4("model", model);
-        //    glDrawElements(GL_TRIANGLES, nodeBuffers.indexCount, GL_UNSIGNED_INT, 0);
-        //}
-
         //Draw Leaves
         glBindVertexArray(leafBuffers.VAO);
         shader.setVec3("objectColor", glm::vec3(0.0f, 1.0f, 0.0f));
@@ -226,8 +205,6 @@ int main() {
 
     // Cleanup
     MeshRenderer::deleteBuffers(cylinderBuffers);
-    // MeshRenderer::deleteBuffers(sphereBuffers);
-    // MeshRenderer::deleteBuffers(nodeBuffers);
 
     // Camera will be automatically cleaned up when unique_ptr goes out of scope
     g_camera = nullptr;
