@@ -30,7 +30,7 @@ enum class Mode {
     SpaceColonization
 };
 
-Mode mode = Mode::LSystem;  // Default mode
+Mode mode = Mode::SpaceColonization;  // Default mode
 
 Camera* g_camera = nullptr;
 
@@ -61,45 +61,6 @@ int main() {
 
     // Create cylinder buffers
     auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
-    
-    /* --------------- DEBIGGING CODES -------------- */
-    //// Generate sphere mesh for attraction points
-    //std::vector<float> sphereVertices;
-    //std::vector<unsigned int> sphereIndices;
-    //Sphere::create(sphereVertices, sphereIndices, 0.03f, 12, 12);
-
-    //// Create sphere buffers
-    //auto sphereBuffers = MeshRenderer::createBuffers(sphereVertices, sphereIndices);
-
-    //// Generate sphere mesh for attraction points
-    //std::vector<float> nodeVertices;
-    //std::vector<unsigned int> nodeIndices;
-    //Sphere::create(nodeVertices, nodeIndices, 0.05f, 12, 12);
-
-    //// Create sphere buffers
-    //auto nodeBuffers = MeshRenderer::createBuffers(nodeVertices, nodeIndices);
-
-    // Create Atrtaction Points
-    Envelope envelope;
-    envelope.position = glm::vec3(0.1f, 1.0f, 0.2f);
-    envelope.interval = glm::vec3(0.3f, 0.3f, 0.3f);
-    AttractionPointManager attractionPoints(envelope);
-
-    // Generate tree nodes on the root branch
-    TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
-    // First growth
-    attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
-
-    int itr = 0;
-    bool grew = true;
-    while (grew != false && itr < MAX_GROW) {
-        grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
-        attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
-        itr++;
-        if (itr % 50 == 0) {
-            printf("%dth growth done. ", itr);
-        }
-    }
 
     // Generate branch transforms
     std::vector<glm::mat4> branchTransforms;
@@ -141,6 +102,28 @@ int main() {
 		Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, axiom, rules, 0.75f, 1.0f, 4);
 	}
 	else if (mode == Mode::SpaceColonization) {
+        // Create Atrtaction Points
+        Envelope envelope;
+        envelope.position = glm::vec3(0.1f, 1.0f, 0.2f);
+        envelope.interval = glm::vec3(0.3f, 0.3f, 0.3f);
+        AttractionPointManager attractionPoints(envelope);
+
+        // Generate tree nodes on the root branch
+        TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
+        // First growth
+        attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+
+        int itr = 0;
+        bool grew = true;
+        while (grew != false && itr < MAX_GROW) {
+            grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
+            attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+            itr++;
+            if (itr % 50 == 0) {
+                printf("%dth growth done. ", itr);
+            }
+        }
+
         Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
 	}
 
