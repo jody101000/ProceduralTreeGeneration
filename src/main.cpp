@@ -132,14 +132,16 @@ int main() {
 
         // Generate tree nodes on the root branch
         TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
+
+        float influenceRadius = std::min(std::min(params.envelope_length, params.envelope_height), params.envelope_width) / 2;
         // First growth
-        attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
+        attractionPoints.UpdateLinks(treeNodeManager, influenceRadius, 0.2f);
 
         int itr = 0;
         bool grew = true;
         while (grew != false && itr < MAX_GROW) {
             grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
-            attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
+            attractionPoints.UpdateLinks(treeNodeManager, influenceRadius, 0.2f);
             itr++;
             if (itr % 50 == 0) {
                 printf("%dth growth done. ", itr);
