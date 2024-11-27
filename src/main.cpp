@@ -25,12 +25,22 @@
 #define ROOT_BRANCH_COUNT (int)7
 #define MAX_GROW (int)200
 
+// parameters for space colonization
+float env_height = 1.0f;
+float env_width = 2.0f;
+float env_length = 2.0f;
+float env_distance = 1.0f;
+int density_x = 5;
+int density_y = 4;
+int density_z = 5;
+
+
 enum class Mode {
     LSystem,
     SpaceColonization
 };
 
-Mode mode = Mode::LSystem;  // Default mode
+Mode mode = Mode::SpaceColonization;  // Default mode
 
 Camera* g_camera = nullptr;
 
@@ -104,27 +114,39 @@ int main() {
 	else if (mode == Mode::SpaceColonization) {
         // Create Atrtaction Points
         Envelope envelope;
-        envelope.position = glm::vec3(0.1f, 1.0f, 0.2f);
-        envelope.interval = glm::vec3(0.3f, 0.3f, 0.3f);
+        envelope.position = treePosition + glm::vec3{ 0.1f, env_distance, 0.2f };
+
+        envelope.positive_x = density_x;
+		envelope.negative_x = density_x;
+		envelope.positive_y = density_y;
+		envelope.positive_z = density_z;
+		envelope.negative_z = density_z;
+
+        float x_interval = env_length / (2.0f * density_x);
+		float y_interval = env_height / density_y;
+        float z_interval = env_width / (2.0f * density_z);
+
+        envelope.interval = glm::vec3(x_interval, y_interval, z_interval);
+
         AttractionPointManager attractionPoints(envelope);
 
         // Generate tree nodes on the root branch
         TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
         // First growth
-        attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+        attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
 
         int itr = 0;
         bool grew = true;
         while (grew != false && itr < MAX_GROW) {
             grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
-            attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+            attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
             itr++;
             if (itr % 50 == 0) {
                 printf("%dth growth done. ", itr);
             }
         }
 
-        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
+        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, 0.1f, 4, ROOT_BRANCH_COUNT, leafTransforms);
 	}
 
 
