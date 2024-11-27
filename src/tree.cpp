@@ -35,6 +35,34 @@ void Tree::createBranches(glm::mat4& model, std::vector<glm::mat4>& branchTransf
 }
 
 
+void generateLeafTransforms(const glm::mat4& currentModel,
+    std::vector<glm::mat4>& leafTransforms,
+    float scale) {
+    std::random_device rd;
+    std::mt19937 gen(rd());
+    std::uniform_int_distribution<> dis(0, 12);
+    std::uniform_int_distribution<> disRotate(-120, 120);
+    // std::uniform_real_distribution<> disScale(0.5f, scale);
+    std::uniform_real_distribution<> disTranslate(-0.4f, 0.4f);
+
+    int num_leaves = dis(gen);
+
+    for (int i = 0; i < num_leaves; i++) {
+        float random_angle = disRotate(gen);
+        // float scaleFactor = disScale(gen);
+
+        glm::mat4 leafModel = currentModel;
+
+        leafModel = glm::scale(leafModel, glm::vec3(scale, scale, scale));
+        // Apply random rotations around different axes
+        leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 0.0f, 1.0f));
+        leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(1.0f, 0.0f, 0.0f));
+        leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 1.0f, 0.0f));
+
+        leafTransforms.push_back(leafModel);
+    }
+}
+
 
 
 void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
@@ -144,26 +172,7 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
 
         case 'L':  // 'L' indicates a leaf point
 
-            for (int i = 0; i < num_leaves; i++) {
-                float random_angle = disRotate(gen);
-                float scaleFactor = disScale(gen);
-
-                float randomTranslateX = disTranslate(gen);
-                float randomTranslateY = disTranslate(gen);
-                float randomTranslateZ = disTranslate(gen);
-                glm::mat4 leafModel = currentModel;
-
-                leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 0.0f, 1.0f)); // Rotate around Z
-                leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(1.0f, 0.0f, 0.0f)); // Rotate around X
-                leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 1.0f, 0.0f)); // Rotate around Y
-
-                // Apply scaling to vary leaf sizes
-                //leafModel = glm::scale(leafModel, glm::vec3(scaleFactor, scaleFactor, scaleFactor));
-                // Apply random translation
-                //leafModel = glm::translate(leafModel, glm::vec3(randomTranslateX, randomTranslateY, randomTranslateZ));
-
-                leafTransforms.push_back(leafModel);
-            }
+            generateLeafTransforms(currentModel, leafTransforms, 1.0f);
             break;
         default:
             // Ignore any other symbols
@@ -173,8 +182,9 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
 }
 
 
-void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
-    float length, float radius, int depth) {
+void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, glm::mat4& model, 
+    std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,
+    float radius, int depth) {
     if (parent.children.empty()) return;
 
     for (size_t child_i : parent.children) {
@@ -198,12 +208,14 @@ void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, 
 
         branchTransforms.push_back(child_branch);
 
-        spaceColonizationGrow(tree_nodes, tree_nodes[child_i], model, branchTransforms, length, radius, depth);
+        generateLeafTransforms(child_branch, leafTransforms, 0.3f);
+
+        spaceColonizationGrow(tree_nodes, tree_nodes[child_i], model, branchTransforms, leafTransforms, radius, depth);
     }
 }
 
-void Tree::createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
-    float length, float radius, int depth, int root_nodes) {
+void Tree::createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, glm::mat4& model, std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,
+    float radius, int depth, int root_nodes) {
     // branchTransforms.push_back(model);
     for (size_t i = 1; i < root_nodes; i++) {
         glm::mat4 main_branch = model;
@@ -226,6 +238,6 @@ void Tree::createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, gl
     }
 
     for (size_t i = 0; i < root_nodes; i++) {
-        spaceColonizationGrow(tree_nodes, tree_nodes[i], model, branchTransforms, length, radius, depth);
+        spaceColonizationGrow(tree_nodes, tree_nodes[i], model, branchTransforms, leafTransforms,  radius, depth);
     }
 }

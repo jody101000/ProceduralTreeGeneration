@@ -108,30 +108,46 @@ void regenerateTree(Mode currentMode, Shader& shader,
         };
         Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, params.axiom, rules, params.scaleFactor, 1.0f, params.depth);
     }
-    else if (currentMode == Mode::SpaceColonization) {
-
-		// Space Colonization
-		SpaceColonizationParameters params = std::get<SpaceColonizationParameters>(parameters);
-		// use the above parameters to generate the tree
-
+    else if (mode == Mode::SpaceColonization) {
+        SpaceColonizationParameters params = std::get<SpaceColonizationParameters>(parameters);
+        // Create Atrtaction Points
         Envelope envelope;
-        envelope.position = glm::vec3(0.1f, 1.0f, 0.2f);
-        envelope.interval = glm::vec3(0.3f, 0.3f, 0.3f);
+        envelope.position = glm::vec3{ 0.1f, params.envelope_distance, 0.2f };
+
+        envelope.positive_x = params.envelope_density[0];
+        envelope.negative_x = params.envelope_density[0];
+        envelope.positive_y = params.envelope_density[1];
+        envelope.positive_z = params.envelope_density[2];
+        envelope.negative_z = params.envelope_density[2];
+
+        float x_interval = params.envelope_length / (2.0f * params.envelope_density[0]);
+        float y_interval = params.envelope_height / params.envelope_density[1];
+        float z_interval = params.envelope_width / (2.0f * params.envelope_density[2]);
+
+        envelope.interval = glm::vec3(x_interval, y_interval, z_interval);
+
         AttractionPointManager attractionPoints(envelope);
 
+        // Generate tree nodes on the root branch
         TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
-        attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+        // First growth
+        attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
 
         int itr = 0;
         bool grew = true;
-        while (grew && itr < MAX_GROW) {
+        while (grew != false && itr < MAX_GROW) {
             grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
-            attractionPoints.UpdateLinks(treeNodeManager, 0.4f, 0.2f);
+            attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
             itr++;
+            if (itr % 50 == 0) {
+                printf("%dth growth done. ", itr);
+            }
         }
 
-        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, 1.0f, 0.1f, 4, ROOT_BRANCH_COUNT);
+        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, leafTransforms, 0.1f, 4, ROOT_BRANCH_COUNT);
     }
+
+
 
     // Update shader settings for new mode
     shader.use();
@@ -187,7 +203,7 @@ int main() {
     };
 
     SpaceColonizationParameters DEFAULT_SPACE_COLONIZATION_PARAMS = {
-            1.0f, 0.5f, 0.5f, 0.5f, {3, 3, 3}
+            1.0f, 2.0f, 2.0f, 1.0f, {3, 3, 3}
     };
 
     static LSystemParameters lParams = DEFAULT_L_SYS_PARAMS;
