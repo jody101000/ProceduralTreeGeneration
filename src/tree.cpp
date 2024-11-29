@@ -37,19 +37,19 @@ void Tree::createBranches(glm::mat4& model, std::vector<glm::mat4>& branchTransf
 
 void generateLeafTransforms(const glm::mat4& currentModel,
     std::vector<glm::mat4>& leafTransforms,
-    float scale) {
+    float scale, int num_leaves) {
     std::random_device rd;
     std::mt19937 gen(rd());
-    std::uniform_int_distribution<> dis(0, 12);
     std::uniform_int_distribution<> disRotate(-120, 120);
-    // std::uniform_real_distribution<> disScale(0.5f, scale);
     std::uniform_real_distribution<> disTranslate(-0.4f, 0.4f);
 
-    int num_leaves = dis(gen);
 
     for (int i = 0; i < num_leaves; i++) {
         float random_angle = disRotate(gen);
         // float scaleFactor = disScale(gen);
+		float translateX = disTranslate(gen);
+		float translateY = disTranslate(gen);
+		float translateZ = disTranslate(gen);
 
         glm::mat4 leafModel = currentModel;
 
@@ -59,20 +59,21 @@ void generateLeafTransforms(const glm::mat4& currentModel,
         leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(1.0f, 0.0f, 0.0f));
         leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
+		leafModel = glm::translate(leafModel, glm::vec3(translateX, translateY, 0));
+
         leafTransforms.push_back(leafModel);
     }
 }
 
+void Tree::createBranchesLSystem(glm::mat4 &model, std::vector<glm::mat4> &branchTransforms,
+                                 std::vector<glm::mat4> &leafTransforms, const std::string &axiom,
+                                 const std::unordered_map<char, std::string> &rules,
+                                 float length, float radius, int depth, int maxLeafCount, int minLeafCount, float xAngle, float yAngle, float zAngle)
+{
 
-
-void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
-    std::vector<glm::mat4>& leafTransforms, const std::string& axiom,
-    const std::unordered_map<char, std::string>& rules,
-    float length, float radius, int depth) {
-
-    const float angleZ = 20.0f; // For '+' and '-'
-    const float angleX = 60.0f; // For '&' and '^'
-    const float angleY = 30.0f; // For '/' and '\\'
+    const float angleZ = zAngle; // For '+' and '-'
+    const float angleX = xAngle; // For '&' and '^'
+    const float angleY = yAngle; // For '/' and '\\'
 
     // Apply the L-system rules to expand the axiom string
     std::string current = axiom;
@@ -92,29 +93,25 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
     // Stack to handle branching points
     std::stack<glm::mat4> transformStack;
     glm::mat4 currentModel = model;
-    // Interpret the expanded string
-	int fCount = 0;
+
+    
+
     for (char c : current) {
         std::random_device rd;  // Seed the random number generator
         std::mt19937 gen(rd()); // Mersenne Twister engine
-        std::uniform_int_distribution<> dis(0,12); // Uniform distribution between 0 and 20
+        std::uniform_int_distribution<> disNumLeaves(minLeafCount,maxLeafCount); // Uniform distribution between 0 and 20
         std::uniform_int_distribution<> disRotate(-120, 120); // Rotation between 0 and 120 degrees
         std::uniform_real_distribution<> disScale(0.5f, length); // Scale between 0.5 and 1.5
-        std::uniform_real_distribution<> disTranslate(-0.4f, 0.4f);
+        //std::uniform_real_distribution<> disTranslate(-0.4f, 0.4f);
 		std::uniform_int_distribution<> disBranch(0,1);
-        int num_leaves = dis(gen);
+        int num_leaves = disNumLeaves(gen);
 		int gen_branch = disBranch(gen);
+        float scale = disScale(gen);
         switch (c) {
         case 'F':
-
-            // Draw forward: Add current transformation and move forward
-            //if (gen_branch != 0 || fCount < 25)
-            //{   
-                fCount++;
-                branchTransforms.push_back(currentModel);
-                currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
-                currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
-            //}
+            branchTransforms.push_back(currentModel);
+            currentModel = glm::translate(currentModel, glm::vec3(0.0f, length+0.15f, 0.0f));
+            currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
             break;
 
         case 'X':
@@ -122,7 +119,7 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
             if (gen_branch != 0) {
             // Generate branches based on 'X' or 'Y'
             branchTransforms.push_back(currentModel);
-            currentModel = glm::translate(currentModel, glm::vec3(0.0f, length, 0.0f));
+            currentModel = glm::translate(currentModel, glm::vec3(0.0f, length+0.15f, 0.0f));
             currentModel = glm::scale(currentModel, glm::vec3(length, length, length));
             }
             break;
@@ -171,8 +168,8 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
             break;
 
         case 'L':  // 'L' indicates a leaf point
-
-            generateLeafTransforms(currentModel, leafTransforms, 1.0f);
+			
+            generateLeafTransforms(currentModel, leafTransforms, scale, num_leaves);
             break;
         default:
             // Ignore any other symbols
@@ -180,7 +177,6 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
         }
     }
 }
-
 
 void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, glm::mat4& model, 
     std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,
@@ -207,8 +203,11 @@ void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, 
         child_branch = glm::scale(child_branch, glm::vec3(parent.radius, 1.0f, parent.radius));
 
         branchTransforms.push_back(child_branch);
-
-        generateLeafTransforms(child_branch, leafTransforms, 0.3f);
+        std::random_device rd;  // Seed the random number generator
+        std::mt19937 gen(rd()); // Mersenne Twister engine
+        std::uniform_int_distribution<> dis(0, 12);
+        int num_leaves = dis(gen);
+        generateLeafTransforms(child_branch, leafTransforms, 0.3f, num_leaves);
 
         spaceColonizationGrow(tree_nodes, tree_nodes[child_i], model, branchTransforms, leafTransforms, radius, depth);
     }

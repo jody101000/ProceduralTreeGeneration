@@ -22,9 +22,8 @@
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
 
-
-#define W_WIDTH 800.0f
-#define W_HEIGHT 600.0f
+#define W_WIDTH 1200.0f
+#define W_HEIGHT 900.0f
 
 #define SHADER_PATH(name) SHADER_DIR name
 #define BRANCH_LENGTH 0.2f
@@ -42,6 +41,11 @@ struct LSystemParameters {
     int depth;
     float scaleFactor;
 	float branchRadius;
+    int minLeafCount;
+    int maxLeafCount;
+	float xAngle;
+	float yAngle;
+	float zAngle;
     std::string axiom;
     std::unordered_map<char, std::string> rules;
 };
@@ -99,14 +103,7 @@ void regenerateTree(Mode currentMode, Shader& shader,
     // Generate the tree
     if (currentMode == Mode::LSystem) {
 		LSystemParameters params = std::get<LSystemParameters>(parameters);
-        std::string axiom = "X";
-        std::unordered_map<char, std::string> rules = {
-            {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\\^FXL][--^FXL]"},
-            {'F', "F[/+FL][-FL]"},
-            {'Y', "F[\\+&FYL][/-+F^YL][/&F^Y*L][\\^FYL][F++++YL]"},
-            {'L', "L[+L][-L][&L][^L]"}
-        };
-        Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, params.axiom, rules, params.scaleFactor, 1.0f, params.depth);
+        Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, params.axiom, params.rules, params.scaleFactor, branchRadius, params.depth, params.maxLeafCount, params.minLeafCount, params.xAngle, params.yAngle, params.zAngle);
     }
     else if (mode == Mode::SpaceColonization) {
         SpaceColonizationParameters params = std::get<SpaceColonizationParameters>(parameters);
@@ -169,7 +166,6 @@ int main() {
     // Create shader
     Shader shader(SHADER_PATH("vertex_shader.glsl"),
                   SHADER_PATH("fragment_shader.glsl"));
-
     // Generate cylinder mesh
     std::vector<float> cylinderVertices;
     std::vector<unsigned int> cylinderIndices;
@@ -193,22 +189,68 @@ int main() {
     // Default parameters
 
     LSystemParameters  DEFAULT_L_SYS_PARAMS = {
-            1, 0.75f, 10.0, "X",
+            3, // Depth
+			0.75f, // Scale Factor
+			15.0f, // Branch Radius
+			10, // Min Leaf Count
+			15, // Max Leaf Count
+			60.0f, // X Angle
+			73.0f, // Y Angle
+			20.0f, // Z Angle
+			"X", // Axiom
             {
-                {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\\^FXL][--^FXL]"},
+                {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\\^FXL][--^FXL][^&X]"},
                 {'F', "F[/+FL][-FL]"},
                 {'Y', "F[\\+&FYL][/-+F^YL][/&F^Y*L][\\^FYL][F++++YL]"},
                 {'L', "L[+L][-L][&L][^L]"}
-            }
+			} // Rules
     };
+
+    LSystemParameters L_SYS_PRESET_PLANT = {
+		2, // Depth
+        0.5, // Scale Factor 
+		5.0f,// Branch Radius
+		5, // Min Leaf Count
+		15, // Max Leaf Count 
+		60.0f, // X Angle
+		30.0f, // Y Angle
+		20.0f, // Z Angle
+		"X", // Axiom
+        {
+            {'X', "F[//+XXL][+++YXL][-&^FXL]"},
+            {'F', "F[/+FL][-FL]"},
+            {'Y', "F[\\+&FYL][/-+F^YL]"},
+            {'L', "L[+L][-L]"}
+		} // Rules
+    };
+
+	LSystemParameters L_SYS_PRESET_AUTUMN = {
+		3, // Depth
+		0.75, // Scale Factor
+		15.0, // Branch Radius
+		3, // Min Leaf Count
+		5, // Max Leaf Count
+		60.0f, // X Angle
+		30.0f, // Y Angle
+		20.0f, // Z Angle
+		"X", // Axiom
+		{
+			{'X', "F[//+XXL][&FXL][\\^FXL][--^FXL]"},
+			{'F', "F[/+FL][-FL]"},
+			{'Y', "F[/&F^Y*L][\\^FYL][F++++YL]"},
+		} // Rules
+	};
+
 
     SpaceColonizationParameters DEFAULT_SPACE_COLONIZATION_PARAMS = {
             1.0f, 2.0f, 2.0f, 1.0f, {3, 3, 3}
     };
 
+	glm::vec3 DEFAULT_LEAF_COLOR = glm::vec3(0.0f, 1.0f, 0.0f);
+
     static LSystemParameters lParams = DEFAULT_L_SYS_PARAMS;
     static SpaceColonizationParameters scParams = DEFAULT_SPACE_COLONIZATION_PARAMS;
-
+	static glm::vec3 leafColor = DEFAULT_LEAF_COLOR;
 	// only for the first generation
     std::variant<LSystemParameters, SpaceColonizationParameters> parameters;
 	if (mode == Mode::LSystem) {
@@ -283,7 +325,7 @@ int main() {
         shader.setInt("numLights", lightPositions.size());
         shader.setVec3("objectColor", treeColor);
 
-        // Draw tree branches
+         //Draw tree branches
         glBindVertexArray(cylinderBuffers.VAO);
         shader.setVec3("objectColor", treeColor);
         for (const auto& transform : branchTransforms) {
@@ -294,12 +336,14 @@ int main() {
         if (showLeaves) {
             //Draw Leaves
             glBindVertexArray(leafBuffers.VAO);
-            shader.setVec3("objectColor", glm::vec3(0.0f, 1.0f, 0.0f));
+            shader.setVec3("objectColor", leafColor);
             for (const auto& transform : leafTransforms) {
                 shader.setMat4("model", transform);
                 glDrawElements(GL_TRIANGLES, leafBuffers.indexCount, GL_UNSIGNED_INT, 0);
             }
         }
+
+        
 
         // close the window when esc is clicked
         if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -331,17 +375,16 @@ int main() {
 
         // L-System Parameters
         if (mode == Mode::LSystem) {
-            //lParams = DEFAULT_L_SYS_PARAMS;s
             ImGui::InputInt("Depth", &lParams.depth);
             ImGui::InputFloat("Scale Factor", &lParams.scaleFactor);
 			ImGui::InputFloat("Branch Radius", &lParams.branchRadius);
-            //ImGui::InputText("Axiom", &lParams.axiom[0], lParams.axiom.size() + 1);
+			ImGui::InputInt("Min Leaf Count", &lParams.minLeafCount);
+			ImGui::InputInt("Max Leaf Count", &lParams.maxLeafCount);
             parameters = lParams;
         }
 
         // Space Colonization Parameters
         else if (mode == Mode::SpaceColonization) {
-			//scParams = DEFAULT_SPACE_COLONIZATION_PARAMS;
             ImGui::InputFloat("Envelope Height", &scParams.envelope_height);
             ImGui::InputFloat("Envelope Width", &scParams.envelope_width);
             ImGui::InputFloat("Envelope Length", &scParams.envelope_length);
@@ -352,21 +395,57 @@ int main() {
             parameters = scParams;
         }
 
+        if (showLeaves) {
+		ImGui::ColorEdit3("Leaf Color", &leafColor[0]);
+        }
+
+       
+
+        if (mode == Mode::LSystem) {
+            ImGui::Text("Presets");
+            ImGui::Separator(); // Draws a horizontal line
+            if (ImGui::Button("Small Plant")) {
+                lParams = L_SYS_PRESET_PLANT;
+                leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
+                regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, lParams);
+            }
+            else if(ImGui::Button("Dense Tree")) {
+				leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
+                lParams = DEFAULT_L_SYS_PARAMS;
+				lParams.depth = 4;
+				regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, lParams);
+            }
+            else if (ImGui::Button("Autumn Tree")) {
+				lParams = L_SYS_PRESET_AUTUMN;
+				leafColor = glm::vec3(1.0f, 0.5f, 0.0f);
+				regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, lParams);
+			}
+			
+
+        }
+
+
+		ImGui::Separator();
         if (ImGui::Button("Regenerate")) {
             regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, parameters);
         }
-
+        ImGui::SameLine();
         if (ImGui::Button("Reset Default Params")) {
 			if (mode == Mode::LSystem) {
 				lParams = DEFAULT_L_SYS_PARAMS;
+                leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
                 regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, lParams);
 			}
 			else if (mode == Mode::SpaceColonization) {
 				scParams = DEFAULT_SPACE_COLONIZATION_PARAMS;
+                leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
+
                 regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, scParams);
 			}
 			
 		}
+
+        
         ImGui::End();
 
         // Render ImGui
