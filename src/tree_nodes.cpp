@@ -74,7 +74,7 @@ bool TreeNodeManager::GrowNewNodes(float growth_distance) {
             TreeNode child_node;
             child_node.position = new_pos;
             child_node.parent = i;
-            child_node.radius = tree_node.radius * 0.85f;
+            child_node.radius = 0.2 + (tree_node.radius - 0.2) * 0.85f;
 
             tree_node.children.push_back(tree_nodes.size());
             

@@ -16,7 +16,7 @@ public:
     static void createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
         std::vector<glm::mat4>& leafTransforms, const std::string& axiom,
         const std::unordered_map<char, std::string>& rules,
-        float length, float radius, int depth, int maxLeafCount, int minLeafCount);
+        float length, float radius, int depth, int maxLeafCount, int minLeafCount, float xAngle, float yAngle, float zAngle);
 
     static void createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, glm::mat4& model, 
         std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,

@@ -55,7 +55,7 @@ struct SpaceColonizationParameters {
     float envelope_width;    // grow box width
     float envelope_length;   // grow box length
     float envelope_distance; // grow box distance from the bottom of the tree
-    int envelope_density[3]; // number of attraction points per axis direction, determines how twisty and how long the tree branches are
+    int envelope_pointNum[3]; // number of attraction points per axis direction, determines how twisty and how long the tree branches are
 };
 
 
@@ -111,37 +111,42 @@ void regenerateTree(Mode currentMode, Shader& shader,
         Envelope envelope;
         envelope.position = glm::vec3{ 0.1f, params.envelope_distance, 0.2f };
 
-        envelope.positive_x = params.envelope_density[0];
-        envelope.negative_x = params.envelope_density[0];
-        envelope.positive_y = params.envelope_density[1];
-        envelope.positive_z = params.envelope_density[2];
-        envelope.negative_z = params.envelope_density[2];
+        envelope.positive_x = params.envelope_pointNum[0];
+        envelope.negative_x = params.envelope_pointNum[0];
+        envelope.positive_y = params.envelope_pointNum[1];
+        envelope.positive_z = params.envelope_pointNum[2];
+        envelope.negative_z = params.envelope_pointNum[2];
 
-        float x_interval = params.envelope_length / (2.0f * params.envelope_density[0]);
-        float y_interval = params.envelope_height / params.envelope_density[1];
-        float z_interval = params.envelope_width / (2.0f * params.envelope_density[2]);
+        float x_interval = params.envelope_length / (2.0f * params.envelope_pointNum[0]);
+        float y_interval = params.envelope_height / params.envelope_pointNum[1];
+        float z_interval = params.envelope_width / (2.0f * params.envelope_pointNum[2]);
 
         envelope.interval = glm::vec3(x_interval, y_interval, z_interval);
 
         AttractionPointManager attractionPoints(envelope);
 
+        float half_length = std::min(std::min(params.envelope_length, params.envelope_height), params.envelope_width) / 2.0f;
+        float min_interval = std::max(std::max(x_interval, y_interval), z_interval);
+
+        float influenceRadius = std::max(half_length, min_interval);
+
         // Generate tree nodes on the root branch
         TreeNodeManager treeNodeManager(ROOT_BRANCH_COUNT);
         // First growth
-        attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
+        attractionPoints.UpdateLinks(treeNodeManager, influenceRadius, 0.2f);
 
         int itr = 0;
         bool grew = true;
         while (grew != false && itr < MAX_GROW) {
             grew = treeNodeManager.GrowNewNodes(BRANCH_LENGTH);
-            attractionPoints.UpdateLinks(treeNodeManager, 0.5f, 0.2f);
+            attractionPoints.UpdateLinks(treeNodeManager, influenceRadius, 0.2f);
             itr++;
             if (itr % 50 == 0) {
                 printf("%dth growth done. ", itr);
             }
         }
 
-        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, leafTransforms, 0.1f, 4, ROOT_BRANCH_COUNT);
+        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, leafTransforms, 0.1f, 0, ROOT_BRANCH_COUNT);
     }
 
 
@@ -343,7 +348,7 @@ int main() {
             }
         }
 
-        
+
 
         // close the window when esc is clicked
         if (glfwGetKey(window.getHandle(), GLFW_KEY_ESCAPE) == GLFW_PRESS) {
@@ -385,12 +390,12 @@ int main() {
 
         // Space Colonization Parameters
         else if (mode == Mode::SpaceColonization) {
-            ImGui::InputFloat("Envelope Height", &scParams.envelope_height);
-            ImGui::InputFloat("Envelope Width", &scParams.envelope_width);
-            ImGui::InputFloat("Envelope Length", &scParams.envelope_length);
-            ImGui::InputFloat("Envelope Distance", &scParams.envelope_distance);
+            ImGui::SliderFloat("Crown Height", &scParams.envelope_height, 0.0f, 6.0f);
+            ImGui::SliderFloat("Crown Width", &scParams.envelope_width, 0.0f, 6.0f);
+            ImGui::SliderFloat("Crown Length", &scParams.envelope_length, 0.0f, 6.0f);
+            ImGui::SliderFloat("Trunk Length", &scParams.envelope_distance, 0.0f, 1.4f);
             for (int i = 0; i < 3; i++) {
-                ImGui::InputInt(("Density Axis " + std::to_string(i + 1)).c_str(), &scParams.envelope_density[i]);
+                ImGui::SliderInt(("Density Factor" + std::to_string(i + 1)).c_str(), &scParams.envelope_pointNum[i], 1, 5);
             }
             parameters = scParams;
         }

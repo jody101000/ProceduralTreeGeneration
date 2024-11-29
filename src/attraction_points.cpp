@@ -33,18 +33,11 @@ void AttractionPointManager::EvenlyDistribute() {
                     envelope.position.z + envelope.interval.z * z
                 );
 
-                // Calculate distance from origin to current position
-                float distance = glm::length(basePosition - envelope.position);
-
-                // Calculate density factor based on distance
-                // As distance increases, density factor decreases (making points closer together)
-                float densityFactor = 1.0f / (1.0f + distance * 0.1f); // Adjust 0.1f to control density falloff
-
                 // Apply density factor to the random offset
                 glm::vec3 randomOffset(
-                    dist(gen) * densityFactor,
-                    dist(gen) * densityFactor,
-                    dist(gen) * densityFactor
+                    dist(gen),
+                    dist(gen),
+                    dist(gen)
                 );
 
                 // Final position combines base position with scaled random offset

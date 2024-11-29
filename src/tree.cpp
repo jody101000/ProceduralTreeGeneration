@@ -37,7 +37,7 @@ void Tree::createBranches(glm::mat4& model, std::vector<glm::mat4>& branchTransf
 
 void generateLeafTransforms(const glm::mat4& currentModel,
     std::vector<glm::mat4>& leafTransforms,
-    float scale, int num_leaves) {
+    float scale, int num_leaves, bool translate) {
     std::random_device rd;
     std::mt19937 gen(rd());
     std::uniform_int_distribution<> disRotate(-120, 120);
@@ -59,7 +59,9 @@ void generateLeafTransforms(const glm::mat4& currentModel,
         leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(1.0f, 0.0f, 0.0f));
         leafModel = glm::rotate(leafModel, glm::radians(random_angle), glm::vec3(0.0f, 1.0f, 0.0f));
 
-		leafModel = glm::translate(leafModel, glm::vec3(translateX, translateY, 0));
+        if (translate) {
+            leafModel = glm::translate(leafModel, glm::vec3(translateX, translateY, 0));
+        }
 
         leafTransforms.push_back(leafModel);
     }
@@ -169,7 +171,7 @@ void Tree::createBranchesLSystem(glm::mat4 &model, std::vector<glm::mat4> &branc
 
         case 'L':  // 'L' indicates a leaf point
 			
-            generateLeafTransforms(currentModel, leafTransforms, scale, num_leaves);
+            generateLeafTransforms(currentModel, leafTransforms, scale, num_leaves, true);
             break;
         default:
             // Ignore any other symbols
@@ -181,7 +183,7 @@ void Tree::createBranchesLSystem(glm::mat4 &model, std::vector<glm::mat4> &branc
 void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, glm::mat4& model, 
     std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,
     float radius, int depth) {
-    if (parent.children.empty()) return;
+    if (parent.children.empty() || depth > 100) return;
 
     for (size_t child_i : parent.children) {
         TreeNode child_node = tree_nodes[child_i];
@@ -207,9 +209,19 @@ void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, 
         std::mt19937 gen(rd()); // Mersenne Twister engine
         std::uniform_int_distribution<> dis(0, 12);
         int num_leaves = dis(gen);
-        generateLeafTransforms(child_branch, leafTransforms, 0.3f, num_leaves);
 
-        spaceColonizationGrow(tree_nodes, tree_nodes[child_i], model, branchTransforms, leafTransforms, radius, depth);
+        glm::mat4 leaf = model;
+        leaf = glm::translate(leaf, child_node.position);
+        if (direction != glm::vec3(0.0f, 1.0f, 0.0f)) {
+            glm::vec3 rotationAxis = glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), direction);
+            float rotationAngle = acos(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), direction));
+            leaf = glm::rotate(leaf, rotationAngle, rotationAxis);
+        }
+        leaf = glm::scale(leaf, glm::vec3(parent.radius, 1.0f, parent.radius));
+
+        generateLeafTransforms(leaf, leafTransforms, 0.3f, num_leaves, false);
+
+        spaceColonizationGrow(tree_nodes, tree_nodes[child_i], model, branchTransforms, leafTransforms, radius, depth + 1);
     }
 }
 
@@ -237,6 +249,6 @@ void Tree::createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, gl
     }
 
     for (size_t i = 0; i < root_nodes; i++) {
-        spaceColonizationGrow(tree_nodes, tree_nodes[i], model, branchTransforms, leafTransforms,  radius, depth);
+        spaceColonizationGrow(tree_nodes, tree_nodes[i], model, branchTransforms, leafTransforms,  radius, depth + 1);
     }
 }
