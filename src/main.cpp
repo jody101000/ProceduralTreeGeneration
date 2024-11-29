@@ -43,6 +43,9 @@ struct LSystemParameters {
 	float branchRadius;
     int minLeafCount;
     int maxLeafCount;
+	float xAngle;
+	float yAngle;
+	float zAngle;
     std::string axiom;
     std::unordered_map<char, std::string> rules;
 };
@@ -100,14 +103,7 @@ void regenerateTree(Mode currentMode, Shader& shader,
     // Generate the tree
     if (currentMode == Mode::LSystem) {
 		LSystemParameters params = std::get<LSystemParameters>(parameters);
-        std::string axiom = "X";
-        std::unordered_map<char, std::string> rules = {
-            {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\\^FXL][--^FXL]"},
-            {'F', "F[/+FL][-FL]"},
-            {'Y', "F[\\+&FYL][/-+F^YL][/&F^Y*L][\\^FYL][F++++YL]"},
-            {'L', "L[+L][-L][&L][^L]"}
-        };
-        Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, params.axiom, rules, params.scaleFactor, 1.0f, params.depth, params.maxLeafCount, params.minLeafCount);
+        Tree::createBranchesLSystem(model, branchTransforms, leafTransforms, params.axiom, params.rules, params.scaleFactor, branchRadius, params.depth, params.maxLeafCount, params.minLeafCount, params.xAngle, params.yAngle, params.zAngle);
     }
     else if (mode == Mode::SpaceColonization) {
         SpaceColonizationParameters params = std::get<SpaceColonizationParameters>(parameters);
@@ -193,24 +189,57 @@ int main() {
     // Default parameters
 
     LSystemParameters  DEFAULT_L_SYS_PARAMS = {
-            3, 0.75f, 15.0, 10, 20, "X",
+            3, // Depth
+			0.75f, // Scale Factor
+			15.0f, // Branch Radius
+			10, // Min Leaf Count
+			15, // Max Leaf Count
+			60.0f, // X Angle
+			73.0f, // Y Angle
+			20.0f, // Z Angle
+			"X", // Axiom
             {
                 {'X', "F[//+XXL][+++YXL][-&^FXL][&FXL][\\^FXL][--^FXL][^&X]"},
                 {'F', "F[/+FL][-FL]"},
                 {'Y', "F[\\+&FYL][/-+F^YL][/&F^Y*L][\\^FYL][F++++YL]"},
                 {'L', "L[+L][-L][&L][^L]"}
-            }
+			} // Rules
     };
 
     LSystemParameters L_SYS_PRESET_PLANT = {
-        2, 0.5, 5.0,5,15,"X",
+		2, // Depth
+        0.5, // Scale Factor 
+		5.0f,// Branch Radius
+		5, // Min Leaf Count
+		15, // Max Leaf Count 
+		60.0f, // X Angle
+		30.0f, // Y Angle
+		20.0f, // Z Angle
+		"X", // Axiom
         {
             {'X', "F[//+XXL][+++YXL][-&^FXL]"},
             {'F', "F[/+FL][-FL]"},
             {'Y', "F[\\+&FYL][/-+F^YL]"},
-            {'L', "L[+L][-L][&L][^L]"}
-        }
+            {'L', "L[+L][-L]"}
+		} // Rules
     };
+
+	LSystemParameters L_SYS_PRESET_AUTUMN = {
+		3, // Depth
+		0.75, // Scale Factor
+		15.0, // Branch Radius
+		3, // Min Leaf Count
+		5, // Max Leaf Count
+		60.0f, // X Angle
+		30.0f, // Y Angle
+		20.0f, // Z Angle
+		"X", // Axiom
+		{
+			{'X', "F[//+XXL][&FXL][\\^FXL][--^FXL]"},
+			{'F', "F[/+FL][-FL]"},
+			{'Y', "F[/&F^Y*L][\\^FYL][F++++YL]"},
+		} // Rules
+	};
 
 
     SpaceColonizationParameters DEFAULT_SPACE_COLONIZATION_PARAMS = {
@@ -387,16 +416,11 @@ int main() {
 				regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, lParams);
             }
             else if (ImGui::Button("Autumn Tree")) {
-                lParams = L_SYS_PRESET_PLANT;
-                lParams.scaleFactor = 0.75;
-				lParams.branchRadius = 15.0;
-                lParams.depth = 3;
-                lParams.minLeafCount = 5;
-				lParams.maxLeafCount = 7;
+				lParams = L_SYS_PRESET_AUTUMN;
 				leafColor = glm::vec3(1.0f, 0.5f, 0.0f);
 				regenerateTree(mode, shader, branchTransforms, leafTransforms, cylinderBuffers, leafBuffers, model, lParams);
-
-            }
+			}
+			
 
         }
 

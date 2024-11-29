@@ -65,16 +65,15 @@ void generateLeafTransforms(const glm::mat4& currentModel,
     }
 }
 
+void Tree::createBranchesLSystem(glm::mat4 &model, std::vector<glm::mat4> &branchTransforms,
+                                 std::vector<glm::mat4> &leafTransforms, const std::string &axiom,
+                                 const std::unordered_map<char, std::string> &rules,
+                                 float length, float radius, int depth, int maxLeafCount, int minLeafCount, float xAngle, float yAngle, float zAngle)
+{
 
-
-void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branchTransforms,
-    std::vector<glm::mat4>& leafTransforms, const std::string& axiom,
-    const std::unordered_map<char, std::string>& rules,
-    float length, float radius, int depth, int maxLeafCount, int minLeafCount) {
-
-    const float angleZ = 20.0f; // For '+' and '-'
-    const float angleX = 60.0f; // For '&' and '^'
-    const float angleY = 30.0f; // For '/' and '\\'
+    const float angleZ = zAngle; // For '+' and '-'
+    const float angleX = xAngle; // For '&' and '^'
+    const float angleY = yAngle; // For '/' and '\\'
 
     // Apply the L-system rules to expand the axiom string
     std::string current = axiom;
@@ -178,7 +177,6 @@ void Tree::createBranchesLSystem(glm::mat4& model, std::vector<glm::mat4>& branc
         }
     }
 }
-
 
 void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, glm::mat4& model, 
     std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,
