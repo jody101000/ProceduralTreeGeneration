@@ -248,7 +248,7 @@ int main() {
 
 
     SpaceColonizationParameters DEFAULT_SPACE_COLONIZATION_PARAMS = {
-            1.0f, 2.0f, 2.0f, 1.0f, {3, 3, 3}
+            1.5f, 2.0f, 2.0f, 1.0f, {3, 3, 3}
     };
 
 	glm::vec3 DEFAULT_LEAF_COLOR = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -293,7 +293,7 @@ int main() {
     glm::vec3 pointColor(1.0f, 0.0f, 0.0f);
     glm::vec3 nodeColor(0.0f, 1.0f, 0.0f);
 
-    glm::vec3 cameraPos = treePosition + glm::vec3{0, 1, 0};
+    glm::vec3 cameraPos = treePosition + glm::vec3{0, 1.5, 0};
     // Create camera and set global pointer
     auto camera = std::make_unique<Camera>(W_WIDTH / W_HEIGHT, cameraPos);
     g_camera = camera.get();
@@ -390,12 +390,12 @@ int main() {
 
         // Space Colonization Parameters
         else if (mode == Mode::SpaceColonization) {
-            ImGui::SliderFloat("Crown Height", &scParams.envelope_height, 0.0f, 6.0f);
-            ImGui::SliderFloat("Crown Width", &scParams.envelope_width, 0.0f, 6.0f);
-            ImGui::SliderFloat("Crown Length", &scParams.envelope_length, 0.0f, 6.0f);
+            ImGui::SliderFloat("Crown Height", &scParams.envelope_height, 0.0f, 5.0f);
+            ImGui::SliderFloat("Crown Width", &scParams.envelope_width, 0.0f, 5.0f);
+            ImGui::SliderFloat("Crown Length", &scParams.envelope_length, 0.0f, 5.0f);
             ImGui::SliderFloat("Trunk Length", &scParams.envelope_distance, 0.0f, 1.4f);
             for (int i = 0; i < 3; i++) {
-                ImGui::SliderInt(("Density Factor" + std::to_string(i + 1)).c_str(), &scParams.envelope_pointNum[i], 1, 5);
+                ImGui::SliderInt(("Density Factor" + std::to_string(i + 1)).c_str(), &scParams.envelope_pointNum[i], 1, 6);
             }
             parameters = scParams;
         }

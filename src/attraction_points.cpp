@@ -57,36 +57,75 @@ void AttractionPointManager::CreatePoints() {
 }
 
 void AttractionPointManager::UpdateLinks(TreeNodeManager& tree_node_manager, const float influence_radius, const float min_distance) {
+    const float influence_radius_sq = influence_radius * influence_radius;
+    const float min_distance_sq = min_distance * min_distance;
+    
     for (auto& node : tree_node_manager.tree_nodes) {
         node.linked_points.clear();
     }
 
-    for (auto& point : attraction_points) {
+    struct GridCell {
+        std::vector<size_t> node_indices;
+    };
+
+    const float cell_size = influence_radius;
+    std::unordered_map<size_t, GridCell> grid;
+
+    for (size_t i = 0; i < tree_node_manager.tree_nodes.size(); i++) {
+        const auto& node = tree_node_manager.tree_nodes[i];
+        size_t cell_x = static_cast<size_t>(node.position.x / cell_size);
+        size_t cell_y = static_cast<size_t>(node.position.y / cell_size);
+        size_t cell_z = static_cast<size_t>(node.position.z / cell_size);
+        size_t cell_key = (cell_x << 20) | (cell_y << 10) | cell_z;
+        grid[cell_key].node_indices.push_back(i);
+    }
+
+    #pragma omp parallel for if(attraction_points.size() > 1000)
+    for (size_t p = 0; p < attraction_points.size(); p++) {
+        auto& point = attraction_points[p];
         if (point.reached) continue;
 
         point.linked_node = -1;
-
-        float closest_distance = std::numeric_limits<float>::max();
+        float closest_distance_sq = std::numeric_limits<float>::max();
         size_t closest_node = -1;
 
-        for (size_t i = 0; i < tree_node_manager.tree_nodes.size(); i++) {
-            TreeNode node = tree_node_manager.tree_nodes[i];
-            float distance = glm::length(point.position - node.position);
+        // Check only neighboring cells
+        size_t cell_x = static_cast<size_t>(point.position.x / cell_size);
+        size_t cell_y = static_cast<size_t>(point.position.y / cell_size);
+        size_t cell_z = static_cast<size_t>(point.position.z / cell_size);
 
-            // Check if node is within influence radius and closer than previous matches
-            if (distance <= influence_radius && distance < closest_distance) {
-                closest_distance = distance;
-                closest_node = i;
-            }
-            // Attraction point reached
-            if (distance <= min_distance) {
-                point.reached = true;
+        for (int dx = -1; dx <= 1; dx++) {
+            for (int dy = -1; dy <= 1; dy++) {
+                for (int dz = -1; dz <= 1; dz++) {
+                    size_t cell_key = ((cell_x + dx) << 20) | ((cell_y + dy) << 10) | (cell_z + dz);
+                    auto it = grid.find(cell_key);
+                    if (it == grid.end()) continue;
+
+                    // Check nodes in this cell
+                    for (size_t node_idx : it->second.node_indices) {
+                        const auto& node = tree_node_manager.tree_nodes[node_idx];
+                        const glm::vec3 diff = point.position - node.position;
+                        const float distance_sq = glm::dot(diff, diff);
+
+                        if (distance_sq <= influence_radius_sq && distance_sq < closest_distance_sq) {
+                            closest_distance_sq = distance_sq;
+                            closest_node = node_idx;
+                        }
+                        if (distance_sq <= min_distance_sq) {
+                            point.reached = true;
+                            break;
+                        }
+                    }
+                }
             }
         }
-        // If we found a valid node within radius, establish the bidirectional link
+
         if (closest_node != -1) {
             point.linked_node = closest_node;
-            tree_node_manager.tree_nodes[closest_node].linked_points.push_back(&point);
+#pragma omp critical
+            {
+                tree_node_manager.tree_nodes[closest_node].linked_points.push_back(&point);
+            }
         }
     }
 

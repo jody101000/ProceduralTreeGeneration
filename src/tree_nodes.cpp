@@ -50,39 +50,50 @@ void TreeNodeManager::InitializeTreeNodes(int initial_num) {
 }
 
 bool TreeNodeManager::GrowNewNodes(float growth_distance) {
-    bool grew = false;
-    for (size_t i = 0; i < tree_nodes.size(); i++) {
+    const size_t original_size = tree_nodes.size();
+    std::vector<TreeNode> new_nodes;
+    new_nodes.reserve(tree_nodes.size() / 2);
+
+    #pragma omp parallel for if(tree_nodes.size() > 1000)
+    for (size_t i = 0; i < original_size; i++) {
         TreeNode& tree_node = tree_nodes[i];
         if (tree_node.linked_points.empty()) continue;
         
         glm::vec3 growth_dir = GrowthDirection(tree_node);
 
         if (growth_dir.y < -0.02f) continue;
-        bool child_repeat = false;
+
         if (glm::length(growth_dir) > 0.001f) {
             glm::vec3 new_pos = tree_node.position + growth_dir * growth_distance;
 
+            bool child_repeat = false;
             // Check if the child has already been created
-            for (size_t ci = 0; ci < tree_node.children.size(); ci++) {
-                if (new_pos == tree_nodes[ci].position) {
+            for (size_t child : tree_node.children) {
+                if (glm::length(new_pos - tree_nodes[child].position) < 0.000001f) {
                     child_repeat = true;
+                    break;
                 }
             }
 
-            if (child_repeat) continue;
+            if (!child_repeat) {
+                TreeNode child_node;
+                child_node.position = new_pos;
+                child_node.parent = i;
+                child_node.radius = 0.2f + (tree_node.radius - 0.2f) * 0.85f;
 
-            TreeNode child_node;
-            child_node.position = new_pos;
-            child_node.parent = i;
-            child_node.radius = 0.2 + (tree_node.radius - 0.2) * 0.85f;
-
-            tree_node.children.push_back(tree_nodes.size());
-            
-            tree_nodes.push_back(child_node);
-            grew = true;
+                #pragma omp critical
+                {
+                    tree_node.children.push_back(tree_nodes.size() + new_nodes.size());
+                    new_nodes.push_back(child_node);
+                }
+            }
         }
     }
-    return grew;
+    if (!new_nodes.empty()) {
+        tree_nodes.insert(tree_nodes.end(), new_nodes.begin(), new_nodes.end());
+        return true;
+    }
+    return false;
 }
 
 glm::vec3 TreeNodeManager::GrowthDirection(TreeNode& node) {
