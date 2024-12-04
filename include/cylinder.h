@@ -1,13 +1,6 @@
 #pragma once
-#include <glad/glad.h>
 #include <vector>
-#include "renderer.h"
 
-struct CylinderMesh {
-    MeshRenderer::BufferObjects buffers;
-    float parentRadius;
-    float childRadius;
-};
 
 class Cylinder {
 public:

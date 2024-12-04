@@ -216,8 +216,6 @@ int main() {
     std::vector<unsigned int> cylinderIndices;
     auto cylinderBuffers = MeshRenderer::createBuffers(cylinderVertices, cylinderIndices);
 
-    std::vector<CylinderMesh> cylinderMeshes;
-
     // Generate branch transforms
     std::vector<glm::mat4> branchTransforms;
     glm::vec3 treePosition(0.0f, 0.0f, 0.0f); // Example: moves tree to x=-2, z=1
