@@ -203,7 +203,7 @@ void spaceColonizationGrow(std::vector<TreeNode>& tree_nodes, TreeNode& parent, 
             float rotationAngle = acos(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), direction));
             child_branch = glm::rotate(child_branch, rotationAngle, rotationAxis);
         }
-        child_branch = glm::scale(child_branch, glm::vec3(parent.radius, 1.0f, parent.radius));
+        child_branch = glm::scale(child_branch, glm::vec3(parent.radius, 1.0f + 0.1f * parent.radius, parent.radius));
 
         branchTransforms.push_back(child_branch);
         std::random_device rd;  // Seed the random number generator
@@ -246,6 +246,7 @@ void Tree::createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, gl
             float rotationAngle = acos(glm::dot(glm::vec3(0.0f, 1.0f, 0.0f), direction));
             main_branch = glm::rotate(main_branch, rotationAngle, rotationAxis);
         }
+        main_branch = glm::scale(main_branch, glm::vec3(1.0f, 1.0f + 0.1f, 1.0f));
 
         branchTransforms.push_back(main_branch);
     }
