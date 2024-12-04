@@ -1,7 +1,6 @@
-# 3D Tree Visualization (temporary)
+# Procedural Tree Generation using LSystem and Space Colonization Algorithms
 
-A 3D tree visualization project using OpenGL, prepared for a Procedrual Tree Generation Project. 
-Tree branch generation is still in a rough state. 
+A 3D procedural tree generation project.
 
 ## Overview
 
@@ -10,7 +9,6 @@ This project demonstrates:
 - Procedural tree generation using recursive algorithms (in `tree.cpp`)
 - Interactive camera system with multiple control modes
 - Basic lighting and shading
-- Modern C++ practices with modular design
 
 ## Important Notes for Contributors
 
@@ -22,11 +20,11 @@ This project demonstrates:
 ## Dependencies
 
 The project uses the following libraries:
-- GLFW 3.3 (Window management and OpenGL context)
-- GLAD (OpenGL loader)
-- GLM (Mathematics library)
-
-All the dependencies are stored in `external` folder.
+- GLFW 3.3: Window management and OpenGL context
+- GLAD: OpenGL loader
+- GLM: Mathematics library
+- ImGui: Immediate mode GUI library for parameter controls and interface
+- OpenMP: Used for parallel processing in tree growth calculations
 
 ## Building and Running
 
@@ -39,8 +37,8 @@ All the dependencies are stored in `external` folder.
 The visualization features an interactive camera system with the following controls:
 
 ### Orbital Controls
-- `W/S`: Adjust camera height up/down
-- `A/D`: Rotate camera left/right around target
+- `W/S`: Rotate camera down/up around focus
+- `A/D`: Rotate camera left/right around focus
 
 ### Direct Movement
 - `Page Up/Down`: Move camera up/down vertically
@@ -48,31 +46,5 @@ The visualization features an interactive camera system with the following contr
 
 ### Additional Controls
 - `Space`: Reset camera to default position and enable auto-rotation
-- `Mouse Scroll`: Zoom in/out
+- `Mouse Scroll`: Zoom in/out during auto rotation
 - Any movement key automatically disables auto-rotation
-- Auto-rotation resumes only when camera is reset to default position using Space
-
-## Project Structure
-
-- `window.h/cpp`: Window management and OpenGL context
-- `camera.h/cpp`: Camera system and controls
-- `shader.h/cpp`: Shader program management
-- `cylinder.h/cpp`: Cylinder mesh generation
-- `tree.h/cpp`: Tree generation algorithm
-- `main.cpp`: Application entry point and rendering loop
-
-## Troubleshooting
-
-Common issues and solutions:
-
-1. **Link errors**
-   - Verify library paths in project properties
-   - Check that GLFW and OpenGL32 libraries are properly linked
-
-2. **Runtime errors**
-   - Ensure all DLLs are in the executable directory
-   - Verify that shader compilation succeeds
-
-3. **Visual artifacts**
-   - Make sure OpenGL version is 3.3 or higher
-   - Check graphics driver updates
