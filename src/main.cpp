@@ -74,7 +74,6 @@ void regenerateTree(Mode currentMode, Shader& shader,
     std::vector<glm::mat4>& leafTransforms,
 	AttractionPointManager& attractionPoints,
     MeshRenderer::BufferObjects& cylinderBuffers,
-    std::vector<CylinderMesh>& cylinderMeshes,
     MeshRenderer::BufferObjects& leafBuffers,
     MeshRenderer::BufferObjects& sphereBuffers,
     glm::mat4& model, std::variant<LSystemParameters, SpaceColonizationParameters> parameters ) {
@@ -88,13 +87,6 @@ void regenerateTree(Mode currentMode, Shader& shader,
     MeshRenderer::deleteBuffers(leafBuffers);
 	MeshRenderer::deleteBuffers(sphereBuffers);
 
-
-	if (mode == Mode::SpaceColonization) {
-        for (auto& mesh : cylinderMeshes) {
-            MeshRenderer::deleteBuffers(mesh.buffers);
-        }
-		cylinderMeshes.clear();
-	}
 
     // Create new buffers
     std::vector<float> cylinderVertices;
@@ -166,7 +158,7 @@ void regenerateTree(Mode currentMode, Shader& shader,
             }
         }
 
-        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, cylinderMeshes, leafTransforms, 0.1f, 0, ROOT_BRANCH_COUNT);
+        Tree::createBranchesSpaceColonization(treeNodeManager.tree_nodes, model, branchTransforms, leafTransforms, 0.1f, 0, ROOT_BRANCH_COUNT);
     }
 
 
@@ -293,7 +285,7 @@ int main() {
 	else if (mode == Mode::SpaceColonization) {
 		parameters = DEFAULT_SPACE_COLONIZATION_PARAMS;
 	}
-	regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, parameters);
+	regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, parameters);
     
 
     // UI init
@@ -360,24 +352,11 @@ int main() {
         shader.setVec3("objectColor", treeColor);
 
          //Draw tree branches
-
-
-		if (mode == Mode::SpaceColonization) {
-            shader.setVec3("objectColor", treeColor);
-            for (size_t i = 0; i < branchTransforms.size(); i++) {
-                glBindVertexArray(cylinderMeshes[i].buffers.VAO);
-                shader.setMat4("model", branchTransforms[i]);
-                glDrawElements(GL_TRIANGLES, cylinderMeshes[i].buffers.indexCount, GL_UNSIGNED_INT, 0);
-            }
-
-		}
-        else {
-            glBindVertexArray(cylinderBuffers.VAO);
-            shader.setVec3("objectColor", treeColor);
-            for (const auto& transform : branchTransforms) {
-                shader.setMat4("model", transform);
-                glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
-            }
+        glBindVertexArray(cylinderBuffers.VAO);
+        shader.setVec3("objectColor", treeColor);
+        for (const auto& transform : branchTransforms) {
+            shader.setMat4("model", transform);
+            glDrawElements(GL_TRIANGLES, cylinderBuffers.indexCount, GL_UNSIGNED_INT, 0);
         }
 
 		// Draw attraction points
@@ -431,12 +410,12 @@ int main() {
         if (ImGui::RadioButton("L-System Mode", mode == Mode::LSystem)) {
             mode = Mode::LSystem;
 			parameters = DEFAULT_L_SYS_PARAMS;
-            regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, parameters);
+            regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, parameters);
         }
         if (ImGui::RadioButton("Space Colonization Mode", mode == Mode::SpaceColonization)) {
             mode = Mode::SpaceColonization;
 			parameters = DEFAULT_SPACE_COLONIZATION_PARAMS;
-            regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, parameters);
+            regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, parameters);
         }
 		ImGui::Checkbox("Show Leaves", &showLeaves);
         ImGui::End();
@@ -482,18 +461,18 @@ int main() {
             if (ImGui::Button("Small Plant")) {
                 lParams = L_SYS_PRESET_PLANT;
                 leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
-                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, lParams);
+                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, lParams);
             }
             else if(ImGui::Button("Dense Tree")) {
 				leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
                 lParams = DEFAULT_L_SYS_PARAMS;
 				lParams.depth = 4;
-                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, lParams);
+                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, lParams);
             }
             else if (ImGui::Button("Autumn Tree")) {
 				lParams = L_SYS_PRESET_AUTUMN;
 				leafColor = glm::vec3(1.0f, 0.5f, 0.0f);
-                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, lParams);
+                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, lParams);
             }
 			
 
@@ -502,20 +481,20 @@ int main() {
 
 		ImGui::Separator();
         if (ImGui::Button("Regenerate")) {
-            regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, parameters);
+            regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, parameters);
         }
         ImGui::SameLine();
         if (ImGui::Button("Reset Default Params")) {
 			if (mode == Mode::LSystem) {
 				lParams = DEFAULT_L_SYS_PARAMS;
                 leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
-                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, lParams);
+                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, lParams);
             }
 			else if (mode == Mode::SpaceColonization) {
 				scParams = DEFAULT_SPACE_COLONIZATION_PARAMS;
                 leafColor = glm::vec3(0.0f, 1.0f, 0.0f);
 
-                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, cylinderMeshes, leafBuffers, sphereBuffers, model, scParams);
+                regenerateTree(mode, shader, branchTransforms, leafTransforms, attractionPoints, cylinderBuffers, leafBuffers, sphereBuffers, model, scParams);
 			}
 			
 		}

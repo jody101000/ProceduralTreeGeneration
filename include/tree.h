@@ -19,6 +19,6 @@ public:
         float length, float radius, int depth, int maxLeafCount, int minLeafCount, float xAngle, float yAngle, float zAngle);
 
     static void createBranchesSpaceColonization(std::vector<TreeNode>& tree_nodes, glm::mat4& model, 
-        std::vector<glm::mat4>& branchTransforms, std::vector<CylinderMesh>& cylinderMeshes, std::vector<glm::mat4>& leafTransforms,
+        std::vector<glm::mat4>& branchTransforms, std::vector<glm::mat4>& leafTransforms,
         float radius, int depth, int root_nodes);
 };
