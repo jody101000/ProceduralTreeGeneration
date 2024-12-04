@@ -15,17 +15,17 @@ void TreeNodeManager::InitializeTreeNodes(int initial_num) {
     float cylinder_radius = 0.1f;
 
     //// Initialize random number generator
-    //std::random_device rd;
-    //std::mt19937 gen(rd());
+    std::random_device rd;
+    std::mt19937 gen(rd());
     
     // deterministic random
-    const unsigned int FIXED_SEED = 123;
-    std::mt19937 gen(FIXED_SEED);
+    //const unsigned int FIXED_SEED = 123;
+    //std::mt19937 gen(FIXED_SEED);
 
     // Distribution for radius (0 to cylinder_radius)
-    std::uniform_real_distribution<float> radius_dist(0.0f, cylinder_radius);
+    std::uniform_real_distribution<float> radius_dist(0.0f, cylinder_radius - 0.02f);
     // Distribution for angle (0 to 2¦Ð)
-    std::uniform_real_distribution<float> angle_dist(0.0f, 2.0f * M_PI);
+    std::uniform_real_distribution<float> angle_dist(0.0f, 1.0f * M_PI);
 
     for (int i = 0; i < initial_num; i++) {
         TreeNode node;

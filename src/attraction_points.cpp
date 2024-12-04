@@ -12,13 +12,13 @@ AttractionPointManager::AttractionPointManager(Envelope envelope) {
 
 void AttractionPointManager::EvenlyDistribute() {
     //// Random number generator setup, real random
-    //std::random_device rd;
-    //std::mt19937 gen(rd());
+    std::random_device rd;
+    std::mt19937 gen(rd());
     //std::uniform_real_distribution<float> dist(-0.2f, 0.2f);
 
     // deterministic random
-    const unsigned int FIXED_SEED = 120;
-    std::mt19937 gen(FIXED_SEED);
+    // const unsigned int FIXED_SEED = 120;
+    // std::mt19937 gen(FIXED_SEED);
     std::uniform_real_distribution<float> dist(-0.2f, 0.2f);
 
     for (int x = -envelope.negative_x; x <= envelope.positive_x; x++) {
