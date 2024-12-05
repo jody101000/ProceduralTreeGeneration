@@ -257,7 +257,7 @@ int main() {
 			15.0f, // Branch Radius
 			10, // Min Leaf Count
 			15, // Max Leaf Count
-			60.0f, // X Angle
+			30.0f, // X Angle
 			73.0f, // Y Angle
 			20.0f, // Z Angle
 			"X", // Axiom
@@ -270,9 +270,9 @@ int main() {
     };
 
     LSystemParameters L_SYS_PRESET_PLANT = {
-		2, // Depth
-        0.5, // Scale Factor 
-		5.0f,// Branch Radius
+		3, // Depth
+        0.65, // Scale Factor 
+		4.5f,// Branch Radius
 		5, // Min Leaf Count
 		15, // Max Leaf Count 
 		60.0f, // X Angle
@@ -288,19 +288,19 @@ int main() {
     };
 
 	LSystemParameters L_SYS_PRESET_AUTUMN = {
-		3, // Depth
+		4, // Depth
 		0.75, // Scale Factor
 		15.0, // Branch Radius
-		3, // Min Leaf Count
-		5, // Max Leaf Count
-		60.0f, // X Angle
+		10, // Min Leaf Count
+		15, // Max Leaf Count
+		40.0f, // X Angle
 		30.0f, // Y Angle
 		20.0f, // Z Angle
 		"X", // Axiom
 		{
-			{'X', "F[//+XXL][&FXL][\\^FXL][--^FXL]"},
-			{'F', "F[/+FL][-FL]"},
-			{'Y', "F[/&F^Y*L][\\^FYL][F++++YL]"},
+			{'X', "F[//+XXL][&XL][\\^XL]"},
+			{'F', "F[F/+L][-FL]"},
+			{'Y', "[/&^Y*L][\\^YL][++++YL]"},
 		} // Rules
 	};
 
